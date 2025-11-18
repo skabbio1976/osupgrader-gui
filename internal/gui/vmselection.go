@@ -18,14 +18,14 @@ func (a *App) showVMSelectionScreen() {
 
 	// Titel
 	title := widget.NewLabelWithStyle(
-		fmt.Sprintf("Välj VMs att uppgradera (%d VMs tillgängliga)", len(vms)),
+		fmt.Sprintf(a.tr.VMSelectionTitleCount, len(vms)),
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Bold: true},
 	)
 
 	// Sökfilter (stödjer regex)
 	searchEntry := widget.NewEntry()
-	searchEntry.SetPlaceHolder("Sök eller regex (t.ex. '003|009|web')...")
+	searchEntry.SetPlaceHolder(a.tr.SearchPlaceholder)
 
 	// Selection state
 	selectedVMs := make(map[string]bool)
@@ -113,19 +113,19 @@ func (a *App) showVMSelectionScreen() {
 
 				switch id.Col {
 				case 0:
-					label.SetText("Välj")
+					label.SetText(a.tr.ColumnSelect)
 					label.Show()
 				case 1:
-					label.SetText("Name")
+					label.SetText(a.tr.ColumnName)
 					label.Show()
 				case 2:
-					label.SetText("Folder")
+					label.SetText(a.tr.ColumnFolder)
 					label.Show()
 				case 3:
-					label.SetText("Domain")
+					label.SetText(a.tr.ColumnDomain)
 					label.Show()
 				case 4:
-					label.SetText("OS")
+					label.SetText(a.tr.ColumnOS)
 					label.Show()
 				}
 				return
@@ -258,7 +258,7 @@ func (a *App) showVMSelectionScreen() {
 	}
 
 	// Välj alla / Avmarkera alla
-	selectAllBtn := widget.NewButton("Välj alla", func() {
+	selectAllBtn := widget.NewButton(a.tr.SelectAll, func() {
 		for _, vm := range filteredVMs {
 			selectedVMs[vm.Name] = true
 		}
@@ -266,7 +266,7 @@ func (a *App) showVMSelectionScreen() {
 	})
 	selectAllBtn.Importance = widget.HighImportance
 
-	deselectAllBtn := widget.NewButton("Avmarkera alla", func() {
+	deselectAllBtn := widget.NewButton(a.tr.DeselectAll, func() {
 		for _, vm := range filteredVMs {
 			selectedVMs[vm.Name] = false
 		}
@@ -275,7 +275,7 @@ func (a *App) showVMSelectionScreen() {
 	deselectAllBtn.Importance = widget.HighImportance
 
 	// Fortsätt-knapp
-	continueBtn := widget.NewButton("Fortsätt till uppgradering", func() {
+	continueBtn := widget.NewButton(a.tr.ContinueToUpgrade, func() {
 		// Räkna valda VMs
 		count := 0
 		for _, checked := range selectedVMs {
@@ -285,7 +285,7 @@ func (a *App) showVMSelectionScreen() {
 		}
 
 		if count == 0 {
-			dialog.ShowInformation("Inga VMs valda", "Du måste välja minst en VM att uppgradera.", a.window)
+			dialog.ShowInformation(a.tr.NoVMsSelected, a.tr.SelectVMsFirst, a.window)
 			return
 		}
 
@@ -294,18 +294,18 @@ func (a *App) showVMSelectionScreen() {
 	})
 
 	// Tillbaka-knapp
-	backBtn := widget.NewButton("Logga ut", func() {
+	backBtn := widget.NewButton(a.tr.LogOut, func() {
 		a.SetClient(nil)
 		a.showLoginScreen()
 	})
 
 	// Refresh-knapp
-	refreshBtn := widget.NewButton("Uppdatera lista", func() {
-		dialog.ShowInformation("Uppdaterar...", "Hämtar VM-lista från vCenter...", a.window)
+	refreshBtn := widget.NewButton(a.tr.RefreshList, func() {
+		dialog.ShowInformation(a.tr.Refreshing, a.tr.RefreshingMessage, a.window)
 		go func() {
 			vms, err := vcenter.GetVMInfos()
 			if err != nil {
-				dialog.ShowError(fmt.Errorf("kunde inte hämta VMs: %v", err), a.window)
+				dialog.ShowError(fmt.Errorf(a.tr.ErrorRefreshVMs, err), a.window)
 				return
 			}
 			a.SetVMs(vms)
@@ -315,7 +315,7 @@ func (a *App) showVMSelectionScreen() {
 	refreshBtn.Importance = widget.HighImportance
 
 	// Snapshot-hantering knapp
-	snapshotBtn := widget.NewButton("Hantera snapshots", func() {
+	snapshotBtn := widget.NewButton(a.tr.ManageSnapshots, func() {
 		a.showSnapshotManagementScreen()
 	})
 	snapshotBtn.Importance = widget.HighImportance

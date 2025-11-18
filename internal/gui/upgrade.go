@@ -27,7 +27,7 @@ func (a *App) showUpgradeScreen(selectedVMs map[string]bool) {
 
 	// Titel
 	title := widget.NewLabelWithStyle(
-		fmt.Sprintf("Uppgradera %d VMs till Windows Server 2022", len(selectedNames)),
+		fmt.Sprintf(a.tr.UpgradeVMs, len(selectedNames)),
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Bold: true},
 	)
@@ -53,7 +53,7 @@ func (a *App) showUpgradeScreen(selectedVMs map[string]bool) {
 	isoPathEntry.SetPlaceHolder("[datastore1] iso/windows-server-2022.iso")
 
 	// Snapshot-alternativ
-	createSnapshotCheck := widget.NewCheck("Skapa snapshot före uppgradering", nil)
+	createSnapshotCheck := widget.NewCheck(a.tr.CreateSnapshot, nil)
 	createSnapshotCheck.SetChecked(true)
 
 	// Progress-widget
@@ -61,7 +61,7 @@ func (a *App) showUpgradeScreen(selectedVMs map[string]bool) {
 	progressBar.Min = 0
 	progressBar.Max = float64(len(selectedNames))
 
-	statusLabel := widget.NewLabel(fmt.Sprintf("Redo att starta - %d servrar valda", len(selectedNames)))
+	statusLabel := widget.NewLabel(fmt.Sprintf(a.tr.ReadyToStart, len(selectedNames)))
 	logText := widget.NewMultiLineEntry()
 	logText.Wrapping = fyne.TextWrapWord
 	// Disable() borttaget så texten är läsbar och användaren kan markera/kopiera
@@ -72,7 +72,7 @@ func (a *App) showUpgradeScreen(selectedVMs map[string]bool) {
 		logText.SetText(logText.Text + fmt.Sprintf("%d. %s\n", i+1, vmName))
 	}
 	logText.SetText(logText.Text + "===========================\n\n")
-	logText.SetText(logText.Text + "Fyll i uppgifterna nedan och klicka 'Starta uppgradering' för att börja.\n\n")
+	logText.SetText(logText.Text + a.tr.FillInDetails)
 
 	// Logga också valda servrar
 	debug.Log("=== UPGRADE SCREEN - VALDA SERVRAR (%d st) ===", len(selectedNames))
@@ -83,7 +83,7 @@ func (a *App) showUpgradeScreen(selectedVMs map[string]bool) {
 	// Deklarera knappar först för att undvika scope-problem
 	var startBtn *widget.Button
 	var backBtn *widget.Button
-	startBtn = widget.NewButton("Starta uppgradering", func() {
+	startBtn = widget.NewButton(a.tr.StartUpgrade, func() {
 		guestUser := guestUserEntry.Text
 		guestPass := guestPassEntry.Text
 		isoPath := isoPathEntry.Text
@@ -97,26 +97,26 @@ func (a *App) showUpgradeScreen(selectedVMs map[string]bool) {
 		debug.Log("=======================")
 
 		if guestUser == "" || guestPass == "" || isoPath == "" {
-			dialog.ShowError(fmt.Errorf("alla fält måste fyllas i"), a.window)
+			dialog.ShowError(fmt.Errorf("%s", a.tr.FillAllFields), a.window)
 			return
 		}
 
 		// Validera ISO först
-		statusLabel.SetText("Validerar ISO-path...")
-		logText.SetText(logText.Text + fmt.Sprintf("[%s] Validerar ISO-path: %s\n", time.Now().Format("15:04:05"), isoPath))
+		statusLabel.SetText(a.tr.ValidatingISO)
+		logText.SetText(logText.Text + fmt.Sprintf("[%s] %s: %s\n", time.Now().Format("15:04:05"), a.tr.ValidatingISO, isoPath))
 
 		go func() {
 			ctx := context.Background()
 			if err := upgrade.ValidateISOPath(ctx, isoPath); err != nil {
-				statusLabel.SetText("ISO-validering misslyckades")
-				logText.SetText(logText.Text + fmt.Sprintf("[%s] FEL: %v\n", time.Now().Format("15:04:05"), err))
-				dialog.ShowError(fmt.Errorf("ISO-validering misslyckades: %v", err), a.window)
+				statusLabel.SetText(a.tr.ISOValidationFailed)
+				logText.SetText(logText.Text + fmt.Sprintf("[%s] ERROR: %v\n", time.Now().Format("15:04:05"), err))
+				dialog.ShowError(fmt.Errorf("%s: %v", a.tr.ISOValidationFailed, err), a.window)
 				return
 			}
 
-			statusLabel.SetText("ISO OK. Startar uppgraderingar...")
-			logText.SetText(logText.Text + fmt.Sprintf("[%s] ISO validerad\n", time.Now().Format("15:04:05")))
-			logText.SetText(logText.Text + fmt.Sprintf("[%s] Startar uppgradering av %d servrar...\n\n", time.Now().Format("15:04:05"), len(selectedNames)))
+			statusLabel.SetText(a.tr.ISOOK)
+			logText.SetText(logText.Text + fmt.Sprintf("[%s] %s\n", time.Now().Format("15:04:05"), a.tr.ISOValidated))
+			logText.SetText(logText.Text + fmt.Sprintf("[%s] "+a.tr.StartingUpgrade, time.Now().Format("15:04:05"), len(selectedNames)))
 
 			// Logga start till debug-logg
 			debug.Log("=== STARTAR UPPGRADERING AV %d SERVRAR ===", len(selectedNames))
@@ -236,7 +236,7 @@ func (a *App) showUpgradeScreen(selectedVMs map[string]bool) {
 					statusLabel.SetText(fmt.Sprintf("VM %d/%d klar (%s misslyckades) - %d lyckades, %d misslyckades",
 						completed, len(selectedNames), result.vmName, completed-failures, failures))
 				} else {
-					logText.SetText(logText.Text + fmt.Sprintf("[%s] ✓ KLAR (%s) - Uppgradering slutförd!\n", time.Now().Format("15:04:05"), result.vmName))
+					logText.SetText(logText.Text + fmt.Sprintf("[%s] "+a.tr.UpgradeCompleted+"\n", time.Now().Format("15:04:05"), result.vmName))
 					statusLabel.SetText(fmt.Sprintf("VM %d/%d klar (%s lyckades) - %d lyckades, %d misslyckades totalt",
 						completed, len(selectedNames), result.vmName, completed-failures, failures))
 				}
@@ -253,9 +253,9 @@ func (a *App) showUpgradeScreen(selectedVMs map[string]bool) {
 			logText.SetText(logText.Text + fmt.Sprintf("[%s] Lyckades: %d\n", time.Now().Format("15:04:05"), completed-failures))
 			logText.SetText(logText.Text + fmt.Sprintf("[%s] Misslyckades: %d\n", time.Now().Format("15:04:05"), failures))
 			if failures == 0 {
-				logText.SetText(logText.Text + fmt.Sprintf("[%s] Status: Alla uppgraderingar slutförda utan fel!\n", time.Now().Format("15:04:05")))
+				logText.SetText(logText.Text + fmt.Sprintf("[%s] %s\n", time.Now().Format("15:04:05"), a.tr.AllSuccessful))
 			} else {
-				logText.SetText(logText.Text + fmt.Sprintf("[%s] Status: Vissa uppgraderingar misslyckades, se logg ovan för detaljer\n", time.Now().Format("15:04:05")))
+				logText.SetText(logText.Text + fmt.Sprintf("[%s] %s\n", time.Now().Format("15:04:05"), a.tr.SomeFailed))
 			}
 			logText.SetText(logText.Text + fmt.Sprintf("[%s] =======================\n\n", time.Now().Format("15:04:05")))
 
@@ -265,17 +265,17 @@ func (a *App) showUpgradeScreen(selectedVMs map[string]bool) {
 	})
 
 	// Tillbaka-knapp
-	backBtn = widget.NewButton("Tillbaka", func() {
+	backBtn = widget.NewButton(a.tr.Back, func() {
 		a.showVMSelectionScreen()
 	})
 
 	// Inställningar-knapp
-	settingsBtn := widget.NewButton("Inställningar", func() {
+	settingsBtn := widget.NewButton(a.tr.SettingsButton, func() {
 		a.showSettingsDialog()
 	})
 
 	// Info-text om att spara credentials
-	infoText := widget.NewLabel("💡 Tip: Spara guest credentials i Inställningar för att slippa ange dem varje gång")
+	infoText := widget.NewLabel(a.tr.TipSaveCredentials)
 	infoText.Wrapping = fyne.TextWrapWord
 
 	// Log scroll
@@ -286,9 +286,9 @@ func (a *App) showUpgradeScreen(selectedVMs map[string]bool) {
 	form := container.NewVBox(
 		infoText,
 		widget.NewForm(
-			widget.NewFormItem("Guest admin user:", guestUserEntry),
-			widget.NewFormItem("Guest password:", guestPassEntry),
-			widget.NewFormItem("ISO datastore path:", isoPathEntry),
+			widget.NewFormItem(a.tr.GuestAdminUser+":", guestUserEntry),
+			widget.NewFormItem(a.tr.GuestAdminPassword+":", guestPassEntry),
+			widget.NewFormItem(a.tr.ISODatastorePath+":", isoPathEntry),
 		),
 		createSnapshotCheck,
 	)

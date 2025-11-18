@@ -28,13 +28,13 @@ type SnapshotInfo struct {
 func (a *App) showSnapshotManagementScreen() {
 	// Titel
 	title := widget.NewLabelWithStyle(
-		"Hantera Pre-Upgrade Snapshots",
+		a.tr.SnapshotsTitle,
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Bold: true},
 	)
 
 	// Status label
-	statusLabel := widget.NewLabel("Söker efter pre-upgrade snapshots...")
+	statusLabel := widget.NewLabel(a.tr.SnapshotsLoading)
 
 	// Progress
 	progress := widget.NewProgressBarInfinite()
@@ -48,7 +48,7 @@ func (a *App) showSnapshotManagementScreen() {
 
 	// Sökfilter (stödjer regex)
 	searchEntry := widget.NewEntry()
-	searchEntry.SetPlaceHolder("Sök eller regex (t.ex. '003|009|web')...")
+	searchEntry.SetPlaceHolder(a.tr.SearchPlaceholder)
 	searchEntry.Disable()
 
 	// Filtrerad lista
@@ -126,7 +126,7 @@ func (a *App) showSnapshotManagementScreen() {
 
 				switch id.Col {
 				case 0:
-					label.SetText("Välj")
+					label.SetText(a.tr.ColumnSelect)
 					label.Show()
 				case 1:
 					label.SetText("VM Name")
@@ -191,7 +191,7 @@ func (a *App) showSnapshotManagementScreen() {
 	var selectAllBtn, deselectAllBtn, removeBtn, refreshBtn *widget.Button
 
 	// Välj alla / Avmarkera alla
-	selectAllBtn = widget.NewButton("Välj alla", func() {
+	selectAllBtn = widget.NewButton(a.tr.SelectAll, func() {
 		for _, snap := range filteredSnapshots {
 			selectedSnapshots[snap.Ref] = true
 		}
@@ -200,7 +200,7 @@ func (a *App) showSnapshotManagementScreen() {
 	selectAllBtn.Importance = widget.HighImportance
 	selectAllBtn.Disable()
 
-	deselectAllBtn = widget.NewButton("Avmarkera alla", func() {
+	deselectAllBtn = widget.NewButton(a.tr.DeselectAll, func() {
 		for _, snap := range filteredSnapshots {
 			selectedSnapshots[snap.Ref] = false
 		}
@@ -210,7 +210,7 @@ func (a *App) showSnapshotManagementScreen() {
 	deselectAllBtn.Disable()
 
 	// Ta bort valda-knapp
-	removeBtn = widget.NewButton("Ta bort valda snapshots", func() {
+	removeBtn = widget.NewButton(a.tr.RemoveSelected, func() {
 		// Räkna valda
 		count := 0
 		for _, checked := range selectedSnapshots {
@@ -220,13 +220,13 @@ func (a *App) showSnapshotManagementScreen() {
 		}
 
 		if count == 0 {
-			dialog.ShowInformation("Inga snapshots valda", "Du måste välja minst en snapshot att ta bort.", a.window)
+			dialog.ShowInformation(a.tr.NoSnapshotsSelected, a.tr.SelectSnapshotsFirst, a.window)
 			return
 		}
 
 		// Bekräftelse
-		dialog.ShowConfirm("Bekräfta borttagning",
-			fmt.Sprintf("Är du säker på att du vill ta bort %d snapshot(s)?\n\nDetta kan INTE ångras!", count),
+		dialog.ShowConfirm(a.tr.RemoveConfirmTitle,
+			fmt.Sprintf(a.tr.RemoveConfirmMessage, count),
 			func(confirmed bool) {
 				if !confirmed {
 					return
@@ -244,7 +244,7 @@ func (a *App) showSnapshotManagementScreen() {
 	})
 
 	// Uppdatera lista-knapp
-	refreshBtn = widget.NewButton("Uppdatera lista", func() {
+	refreshBtn = widget.NewButton(a.tr.RefreshList, func() {
 		go a.loadSnapshots(statusLabel, progress, searchEntry, selectAllBtn, deselectAllBtn, removeBtn, &snapshotList, &selectedSnapshots, updateFilteredList)
 	})
 	refreshBtn.Importance = widget.HighImportance
@@ -276,7 +276,7 @@ func (a *App) loadSnapshots(statusLabel *widget.Label, progress *widget.Progress
 	selectAllBtn, deselectAllBtn, removeBtn *widget.Button, snapshotList *[]SnapshotInfo, selectedSnapshots *map[string]bool, updateFilteredList func(string)) {
 
 	debug.Log("Loading snapshots from all VMs...")
-	statusLabel.SetText("Söker efter pre-upgrade snapshots...")
+	statusLabel.SetText(a.tr.SnapshotsLoading)
 	progress.Show()
 	progress.Start()
 
@@ -354,7 +354,7 @@ func (a *App) removeSelectedSnapshots(snapshots []SnapshotInfo, selected map[str
 	var removed, failed atomic.Int32
 	var wg sync.WaitGroup
 
-	statusLabel.SetText(fmt.Sprintf("Tar bort %d snapshot(s) parallellt...", len(toRemove)))
+	statusLabel.SetText(fmt.Sprintf(a.tr.RemovingSnapshots, len(toRemove)))
 	debug.Log("Starting parallel removal of %d snapshots", len(toRemove))
 
 	// Starta parallella goroutines för varje snapshot
@@ -382,10 +382,10 @@ func (a *App) removeSelectedSnapshots(snapshots []SnapshotInfo, selected map[str
 	failedCount := failed.Load()
 
 	if failedCount == 0 {
-		statusLabel.SetText(fmt.Sprintf("✓ Klart! %d snapshot(s) borttagna", removedCount))
+		statusLabel.SetText(fmt.Sprintf(a.tr.RemoveSuccessCount, removedCount))
 		debug.Log("Snapshot removal completed successfully: %d removed", removedCount)
 	} else {
-		statusLabel.SetText(fmt.Sprintf("⚠ Klart med fel: %d borttagna, %d misslyckades", removedCount, failedCount))
+		statusLabel.SetText(fmt.Sprintf(a.tr.RemoveErrorCount, removedCount, failedCount))
 		debug.Log("Snapshot removal completed with errors: %d removed, %d failed", removedCount, failedCount)
 	}
 

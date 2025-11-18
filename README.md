@@ -1,149 +1,152 @@
 # OSUpgrader GUI
 
-An automated tool for upgrading Windows Server 2016/2019 to Windows Server 2022 Datacenter via VMware vCenter/vSphere.
+An automated tool for upgrading Windows Server 2016/2019 to Windows Server 2022/2025 Datacenter via VMware vCenter/vSphere.
+
+**[🇸🇪 Swedish version / Svensk version](README-SWE.md)**
 
 ## Overview
 
 OSUpgrader GUI is a Fyne-based graphical application that makes it easy to upgrade multiple Windows Server VMs simultaneously through an intuitive user interface.
 
-## Funktioner
+## Features
 
-- **Grafiskt gränssnitt** med Fye-ramverket
-  - Automatisk DPI-skalning för optimal visning på alla skärmar
-- **vCenter-inloggning** med stöd för:
-  - Lösenordsautentisering (alla plattformar)
-  - Windows SSPI/Kerberos single sign-on (Windows endast) ✓ Testad och verifierad
-  - Osignerade certifikat
-- **VM-selection** med tabell-vy (Name, Folder, Domain, OS kolumner), sökfiltrering och multi-select
-- **Multi-domän support**:
-  - Automatisk domän-append till användarnamn (t.ex. `upgrade` → `upgrade@domain.local`)
-  - Möjliggör samma servicekonto i flera domäner
-  - Visar VM:ens domän i tabellvy
-- **Snapshot-hantering**:
-  - Automatisk snapshot före uppgradering
-  - Separat skärm för att hantera och ta bort pre-upgrade snapshots
-  - Batch-borttagning av flera snapshots samtidigt
-  - Filtrering på snapshot-prefix
-- **Parallella uppgraderingar** med konfigurerbar samtidighet
-- **Progress tracking** med real-time loggning och readable text
-- **ISO-validering** innan uppgradering startar
-- **Konfigurationshantering** via GUI-dialog med sparade guest-credentials
-- **Debug-loggning** (valfritt med `-d/--debug` flagga):
-  - Detaljerad loggning till `debuglogg.txt`
-  - Säker loggning (lösenord aldrig i klartext)
-  - Perfekt för troubleshooting i airgapped miljöer
-- **Säker autentisering**:
-  - Credential-validering innan uppgradering
-  - Förhindrar account lockout från misslyckade försök
+- **Graphical user interface** with Fyne framework
+  - Automatic DPI scaling for optimal display on all screens
+- **vCenter login** with support for:
+  - Password authentication (all platforms)
+  - Windows SSPI/Kerberos single sign-on (Windows only) ✓ Tested and verified
+  - Self-signed certificates
+- **VM selection** with table view (Name, Folder, Domain, OS columns), search filtering and multi-select
+- **Multi-domain support**:
+  - Automatic domain append to username (e.g. `upgrade` → `upgrade@domain.local`)
+  - Enables same service account across multiple domains
+  - Shows VM's domain in table view
+- **Snapshot management**:
+  - Automatic snapshot before upgrade
+  - Separate screen for managing and removing pre-upgrade snapshots
+  - Batch removal of multiple snapshots simultaneously
+  - Filtering by snapshot prefix
+- **Parallel upgrades** with configurable concurrency
+- **Progress tracking** with real-time logging and readable text
+- **ISO validation** before upgrade starts
+- **Configuration management** via GUI dialog with saved guest credentials
+- **Debug logging** (optional with `-d/--debug` flag):
+  - Detailed logging to `debuglogg.txt`
+  - Safe logging (passwords never in cleartext)
+  - Perfect for troubleshooting in airgapped environments
+- **Secure authentication**:
+  - Credential validation before upgrade
+  - Prevents account lockout from failed attempts
 
-## Systemkrav
+## System Requirements
 
-- Go 1.24 eller senare
+- Go 1.24 or later
 - Linux/Windows/macOS
-- Tillgång till VMware vCenter
-- Windows Server 2022 Datacenter ISO på datastore
+- Access to VMware vCenter
+- Windows Server 2022/2025 Datacenter ISO on datastore
 
 ## Installation
 
-### Bygg från källkod
+### Build from source
 
 ```bash
-# Klona projektet
-cd /home/jok/gitrepos/goprojects/active/osupgrader-gui
+# Clone the project
+git clone https://github.com/yourusername/osupgrader-gui.git
+cd osupgrader-gui
 
-# Hämta dependencies
+# Fetch dependencies
 go mod tidy
 
-# Bygg applikationen
+# Build the application
 go build -o osupgrader-gui ./cmd/osupgrader-gui
 
-# Kör applikationen
+# Run the application
 ./osupgrader-gui
 ```
 
-### Bygg för både Linux och Windows
+### Build for both Linux and Windows
 
 ```bash
-# Använd build-scriptet (kräver Docker för Windows-bygge)
+# Use the build script (requires Docker for Windows builds)
 ./build.sh
 ```
 
-### Manuell Windows-kompilering
+### Manual Windows compilation
 
 ```bash
-# Installera fyne-cross först
+# Install fyne-cross first
 go install github.com/fyne-io/fyne-cross@latest
 
-# Bygg för Windows från Linux (kräver Docker)
+# Build for Windows from Linux (requires Docker)
 ~/go/bin/fyne-cross windows -arch=amd64 -app-id com.example.osupgrader ./cmd/osupgrader-gui
 
-# Extrahera
+# Extract
 cd fyne-cross/dist/windows-amd64
 unzip osupgrader-gui.exe.zip
 ```
 
-## Användning
+## Usage
 
-1. **Starta applikationen**
+1. **Start the application**
    ```bash
-   # Normal användning (ingen debug-loggning)
+   # Normal usage (no debug logging)
    ./osupgrader-gui
 
-   # Med debug-loggning (för troubleshooting)
+   # With debug logging (for troubleshooting)
    ./osupgrader-gui -d
-   # eller
+   # or
    ./osupgrader-gui --debug
    ```
 
-   När debug-loggning är aktiverad skapas `debuglogg.txt` i samma mapp som programmet med detaljerad information om alla operationer.
+   When debug logging is enabled, `debuglogg.txt` is created in the same folder as the program with detailed information about all operations.
 
-2. **Logga in på vCenter**
-   - Ange vCenter-host (t.ex. `vcenter.example.local`)
-   - Välj autentiseringsmetod:
-     - **Lösenord**: Ange användarnamn och lösenord
-     - **Windows SSPI/Kerberos**: Single sign-on med ditt Windows-domänkonto (endast Windows)
-       - Ingen lösenordsinmatning krävs
-       - Använder dina Windows-credentials automatiskt
-       - Perfekt för domän-miljöer med integrerad autentisering
-   - Markera "Tillåt osignerade certifikat" om nödvändigt
-   - Klicka på "Logga in"
+2. **Log in to vCenter**
+   - Enter vCenter host (e.g. `vcenter.example.local`)
+   - Choose authentication method:
+     - **Password**: Enter username and password
+     - **Windows SSPI/Kerberos**: Single sign-on with your Windows domain account (Windows only)
+       - No password input required
+       - Uses your Windows credentials automatically
+       - Perfect for domain environments with integrated authentication
+   - Check "Allow self-signed certificates" if necessary
+   - Click "Log in"
 
-3. **Välj VMs att uppgradera**
-   - Tabell-vy visar alla VMs med kolumner: Välj, Name, Folder, Domain, OS
-   - Sök efter VMs med sökfältet (söker i alla kolumner inklusive domän)
-   - Välj VMs genom att markera checkboxarna i första kolumnen
-   - Använd "Välj alla" / "Avmarkera alla" för bulkoperationer
-   - Klicka på "Hantera snapshots" för att ta bort gamla pre-upgrade snapshots
-   - Klicka på "Fortsätt till uppgradering"
+3. **Select VMs to upgrade**
+   - Table view shows all VMs with columns: Select, Name, Folder, Domain, OS
+   - Search for VMs using the search field (searches all columns including domain)
+   - Select VMs by checking the checkboxes in the first column
+   - Use "Select all" / "Deselect all" for bulk operations
+   - Click "Manage snapshots" to remove old pre-upgrade snapshots
+   - Click "Continue to upgrade"
 
-4. **Konfigurera uppgradering**
-   - Ange guest admin-användare (t.ex. `upgrade`)
-     - **Multi-domän support**: Ange bara användarnamn utan domän (t.ex. `upgrade`)
-     - Systemet lägger automatiskt till VM:ens domän: `upgrade@domain1.local`
-     - Fungerar perfekt med samma servicekonto i flera domäner
-     - Om du vill ange specifik domän, använd `DOMAIN\user` eller `user@domain.com`
-   - Ange guest-lösenord
-   - **💡 Tips**: Spara guest credentials i Inställningar för att slippa ange dem varje gång!
-   - Ange ISO datastore path (t.ex. `[datastore1] iso/windows-server-2022.iso`)
-   - Välj om snapshot ska skapas före uppgradering
-   - Klicka på "Starta uppgradering"
+4. **Configure upgrade**
+   - Enter guest admin user (e.g. `upgrade`)
+     - **Multi-domain support**: Enter username only without domain (e.g. `upgrade`)
+     - System automatically appends VM's domain: `upgrade@domain1.local`
+     - Works perfectly with same service account across multiple domains
+     - If you want to specify a specific domain, use `DOMAIN\user` or `user@domain.com`
+   - Enter guest password
+   - **💡 Tip**: Save guest credentials in Settings to avoid entering them every time!
+   - Enter ISO datastore path (e.g. `[datastore1] iso/windows-server-2022.iso`)
+   - Choose if snapshot should be created before upgrade
+   - Click "Start upgrade"
 
-5. **Övervaka progress**
-   - Progress bar visar framsteg
-   - Real-time logg visar detaljerad information (texten är läsbar och kan markeras/kopieras)
-   - Status-meddelanden uppdateras kontinuerligt
-   - Uppgraderingen pågår i bakgrunden på guest OS
+5. **Monitor progress**
+   - Progress bar shows progress
+   - Real-time log shows detailed information (text is readable and can be selected/copied)
+   - Status messages update continuously
+   - Upgrade runs in background on guest OS
 
-6. **Hantera snapshots efter uppgradering** (rekommenderat workflow)
-   - Efter uppgradering: Låt appägare verifiera att systemet fungerar
-   - Gå till "Hantera snapshots"
-   - Välj pre-upgrade snapshots att ta bort
-   - Bekräfta borttagning (kan inte ångras!)
-   - Frigör diskutrymme på datastore
+6. **Manage snapshots after upgrade** (recommended workflow)
+   - After upgrade: Let application owners verify the system works
+   - Go to "Manage snapshots"
+   - Select pre-upgrade snapshots to remove
+   - Confirm removal (cannot be undone!)
+   - Free up disk space on datastore
 
-## Konfiguration
+## Configuration
 
-Konfigurationen sparas i `~/conf.json` och kan redigeras via GUI:s inställningsdialog:
+Configuration is saved in `~/conf.json` and can be edited via the GUI's settings dialog:
 
 ```json
 {
@@ -157,7 +160,6 @@ Konfigurationen sparas i `~/conf.json` och kan redigeras via GUI:s inställnings
     "snapshot_name_prefix": "pre-upgrade",
     "iso_datastore_path": "[datastore1] iso/windows-server-2022.iso",
     "skip_memory_in_snapshot": true,
-    "glvk": "WX4NM-KYWYW-QJJR4-XV3QB-6VM33",
     "guest_username": "upgrade"
   },
   "upgrade": {
@@ -166,226 +168,237 @@ Konfigurationen sparas i `~/conf.json` och kan redigeras via GUI:s inställnings
     "timeout_minutes": 90,
     "precheck_disk_gb": 10
   },
+  "timeouts": {
+    "signal_script_seconds": 30,
+    "signal_files_minutes": 30,
+    "target_os_minutes": 20,
+    "poweroff_minutes": 5
+  },
   "logging": {
     "level": "info",
     "file": "osupgrader.log"
   },
   "ui": {
-    "language": "sv"
+    "language": "sv",
+    "dark_mode": false
   }
 }
 ```
 
-### Konfigurationsalternativ
+### Configuration Options
 
-#### vCenter-inställningar
+#### vCenter Settings
 - **vcenter_url**: vCenter server hostname
-- **username**: vCenter användarnamn
-- **insecure**: Tillåt osignerade SSL-certifikat
+- **username**: vCenter username
+- **insecure**: Allow self-signed SSL certificates
 
-#### Guest OS-credentials
-- **guest_username**: Windows admin-användare på VMs (t.ex. `upgrade`)
-  - Sparas i konfigurationsfilen för bekvämlighet
-  - Om användarnamn saknar domän (`\` eller `@`) läggs VM:ens domän till automatiskt
-  - Exempel: `upgrade` → `upgrade@domain1.local` (baserat på VM:ens domän)
-- **guest_password**: Windows admin-lösenord (masked i GUI med visa/dölj-knapp)
-  - ⚠️ **Säkerhetsanmärkning**: Lösenord sparas endast i minnet under applikationens körning och skrivs ALDRIG till konfigurationsfilen
+#### Guest OS Credentials
+- **guest_username**: Windows admin user on VMs (e.g. `upgrade`)
+  - Saved in configuration file for convenience
+  - If username lacks domain (`\` or `@`), VM's domain is added automatically
+  - Example: `upgrade` → `upgrade@domain1.local` (based on VM's domain)
+- **guest_password**: Windows admin password (masked in GUI with show/hide button)
+  - ⚠️ **Security note**: Password is only stored in memory during application runtime and is NEVER written to the configuration file
 
-#### Upgrade-inställningar
-- **snapshot_name_prefix**: Prefix för snapshot-namn
-- **iso_datastore_path**: Sökväg till Windows Server 2022 ISO
-- **skip_memory_in_snapshot**: Hoppa över minne i snapshot (snabbare)
-- **glvk**: Windows Server 2022 Datacenter GVLK-nyckel
-- **parallel**: Antal parallella uppgraderingar (1-10)
-- **reboot**: Starta om automatiskt efter uppgradering
-- **timeout_minutes**: Timeout för uppgradering per VM
-- **precheck_disk_gb**: Minimum ledigt diskutrymme (GB)
-- **poweroff_minutes**: Max tid att vänta på att Windows stänger av sig själv innan vCenter forcerar power off
+#### Upgrade Settings
+- **snapshot_name_prefix**: Prefix for snapshot names
+- **iso_datastore_path**: Path to Windows Server 2022/2025 ISO
+- **skip_memory_in_snapshot**: Skip memory in snapshot (faster)
+- **parallel**: Number of parallel upgrades (1-10)
+- **reboot**: Automatically reboot after upgrade
+- **timeout_minutes**: Timeout for upgrade per VM
+- **precheck_disk_gb**: Minimum free disk space (GB)
 
-#### Timeout-inställningar
-- **signal_script_seconds**: Väntetid på att signaltask-scriptet slutförs
-- **signal_files_minutes**: Väntetid på att scheduled-taskens signalfiler dyker upp
-- **target_os_minutes**: Max tid att vänta på målsatt OS-version
-- **poweroff_minutes**: Max tid att vänta på gäst-shutdown innan hård power off
+#### Timeout Settings
+- **signal_script_seconds**: Wait time for signal task script completion
+- **signal_files_minutes**: Wait time for scheduled task signal files to appear
+- **target_os_minutes**: Max time to wait for target OS version
+- **poweroff_minutes**: Max time to wait for guest shutdown before forced power off
 
-## Uppgraderingsprocess
+## Upgrade Process
 
-1. **Validering**
-   - Validera guest credentials (förhindrar account lockout)
-   - Kontrollera att ISO-filen finns på datastoren
-   - Kontrollera diskutrymme på guest OS (minst 10 GB ledigt)
-   - Kontrollera att VM är påslagen och VMware Tools körs
+1. **Validation**
+   - Validate guest credentials (prevents account lockout)
+   - Check that ISO file exists on datastore
+   - Check disk space on guest OS (at least 10 GB free)
+   - Check that VM is powered on and VMware Tools is running
 
 2. **Snapshot**
-   - Skapa snapshot för återställning (valfritt)
-   - Verifiera att snapshot skapades korrekt
-   - Namnformat: `pre-upgrade-pre-YYYYMMDD-HHMM`
+   - Create snapshot for recovery (optional)
+   - Verify that snapshot was created correctly
+   - Name format: `pre-upgrade-pre-YYYYMMDD-HHMM`
 
-3. **ISO-montering**
-   - Montera Windows Server 2022 ISO till CD-ROM
-   - Verifiera att ISO är monterad
+3. **ISO Mounting**
+   - Mount Windows Server 2022/2025 ISO to CD-ROM
+   - Verify that ISO is mounted
 
-4. **Uppgradering**
-   - Kör PowerShell upgrade-script via VMware Tools
-   - Scriptet detekterar Core/Desktop automatiskt
-   - Väljer rätt WIM-image index (3=Core, 4=Desktop)
-   - Startar Windows Setup med `/auto upgrade /noreboot`
-   - Väntar på att setup.exe slutförs (med `-Wait`)
-   - Schemalägger en mjuk shutdown i Windows (60 sekunder för att städa upp tjänster)
+4. **Upgrade**
+   - Run PowerShell upgrade script via VMware Tools
+   - Script automatically detects OS edition (Datacenter/Standard, Core/Desktop)
+   - Script sets appropriate GVLK key based on detected SKU
+   - Selects correct WIM image index (1=Standard Core, 2=Standard Desktop, 3=Datacenter Core, 4=Datacenter Desktop)
+   - Starts Windows Setup with `/auto upgrade /noreboot`
+   - Waits for setup.exe to complete (with `-Wait`)
+   - Schedules a graceful shutdown in Windows (60 seconds to clean up services)
 
-5. **Övervakning**
-   - Pollning av PowerShell script-exit och kontroll av exit code
-   - Väntar på att VM går till `poweredOff`, och forcerar `PowerOff` via vCenter om det inte sker inom `poweroff_minutes`
-   - Sover 60 sekunder och `PowerOn`:ar VM:en via vCenter innan nästa fas
-   - Pollning av VMware Tools/OS-version varje 45 sekunder tills Windows Server 2022/2025 rapporteras
-   - Timeout efter konfigurerad tid (standard: 90 minuter + konfigurerbar power-off timeout)
+5. **Monitoring**
+   - Polling of PowerShell script exit and checking exit code
+   - Waits for VM to go to `poweredOff`, forces `PowerOff` via vCenter if not within `poweroff_minutes`
+   - Sleeps 60 seconds and powers on VM via vCenter before next phase
+   - Polling VMware Tools/OS version every 45 seconds until Windows Server 2022/2025 is reported
+   - Timeout after configured time (default: 90 minutes + configurable power-off timeout)
 
-6. **Avslutning**
-   - Väntar på scheduled-taskens signalfiler (task-baserad indikator) för att se att inloggningsmiljön är klar
-   - Demontera ISO när uppgraderingen är klar
-   - Verifierar att OS-version är 2022 eller 2025
+6. **Completion**
+   - Waits for scheduled task signal files (task-based indicator) to see login environment is ready
+   - Unmount ISO when upgrade is complete
+   - Verify OS version is 2022 or 2025
 
-## Projektstruktur
+## Project Structure
 
 ```
 osupgrader-gui/
 ├── cmd/
 │   └── osupgrader-gui/
-│       └── main.go              # Huvudprogrammet (med -d/--debug flagga)
+│       └── main.go              # Main program (with -d/--debug flag)
 ├── internal/
 │   ├── config/
-│   │   └── config.go            # Konfigurationshantering
+│   │   └── config.go            # Configuration management
 │   ├── debug/
-│   │   └── logger.go            # Debug-loggning till fil
+│   │   └── logger.go            # Debug logging to file
 │   ├── vcenter/
-│   │   ├── client.go            # vCenter-klient och inloggning
-│   │   ├── inventory.go         # VM-inventory-hantering (med domän)
-│   │   ├── snapshot.go          # Snapshot-operationer
-│   │   └── types.go             # Datatyper (VMInfo med Domain)
+│   │   ├── client.go            # vCenter client and login
+│   │   ├── inventory.go         # VM inventory management (with domain)
+│   │   ├── snapshot.go          # Snapshot operations
+│   │   └── types.go             # Data types (VMInfo with Domain)
 │   ├── upgrade/
-│   │   ├── upgrade.go           # Uppgraderingslogik (auto-domain append)
-│   │   ├── validators.go        # Validerings-funktioner
-│   │   └── iso.go               # ISO-hantering
+│   │   ├── upgrade.go           # Upgrade logic (auto-domain append)
+│   │   ├── validators.go        # Validation functions
+│   │   ├── iso.go               # ISO management
+│   │   └── assets/
+│   │       ├── upgradeos.ps1    # Upgrade PowerShell script
+│   │       ├── cleanup.ps1      # Cleanup script
+│   │       ├── createsignaltasks.ps1  # Signal task creation
+│   │       └── processmonitor.ps1     # Process monitoring
 │   └── gui/
-│       ├── app.go               # Huvudapplikation (DPI-skalning)
-│       ├── login.go             # Login-skärm
-│       ├── vmselection.go       # VM-selection-skärm (med Domain-kolumn)
-│       ├── upgrade.go           # Upgrade-workflow-skärm
-│       ├── snapshots.go         # Snapshot-hanteringsskärm (NY!)
-│       └── settings.go          # Inställningsdialog
+│       ├── app.go               # Main application (DPI scaling)
+│       ├── login.go             # Login screen
+│       ├── vmselection.go       # VM selection screen (with Domain column)
+│       ├── upgrade.go           # Upgrade workflow screen
+│       ├── snapshots.go         # Snapshot management screen
+│       └── settings.go          # Settings dialog
 ├── go.mod
 ├── go.sum
 └── README.md
 ```
 
-## Säkerhetsfunktioner
+## Security Features
 
-- **Lösenord lagras aldrig** i konfigurationsfilen
-- **Säker debug-loggning**: Lösenord loggas aldrig i klartext (endast längd)
-- **Credential-validering**: Kontrollerar credentials före uppgradering för att förhindra account lockout
-- **Windows SSPI/Kerberos-stöd** för säker single sign-on utan lösenordsinmatning
-- **Snapshot-verifiering** förhindrar dataförlust
-- **Snapshot-hantering med bekräftelse**: Bekräftelsedialog för borttagning av snapshots
-- **ISO-validering** före snapshot sparar tid
-- **Thread-safe** operationer med mutex-skydd
-- **VMware Tools crash recovery** hanterar omstarter under uppgradering
-- **Timeout-hantering** förhindrar hängande uppgraderingar
-- **Multi-domän support**: Automatisk domän-append minskar risk för fel användarnamn
+- **Passwords never stored** in configuration file
+- **Safe debug logging**: Passwords never logged in cleartext (only length)
+- **Credential validation**: Checks credentials before upgrade to prevent account lockout
+- **Windows SSPI/Kerberos support** for secure single sign-on without password input
+- **Snapshot verification** prevents data loss
+- **Snapshot management with confirmation**: Confirmation dialog for snapshot removal
+- **ISO validation** before snapshot saves time
+- **Thread-safe** operations with mutex protection
+- **VMware Tools crash recovery** handles restarts during upgrade
+- **Timeout handling** prevents hanging upgrades
+- **Multi-domain support**: Automatic domain append reduces risk of incorrect username
 
-## Windows SSPI/Kerberos-autentisering
+## Windows SSPI/Kerberos Authentication
 
-SSPI (Security Support Provider Interface) är Microsofts API för autentisering och säkerhet i Windows. När du använder SSPI-inloggning:
+SSPI (Security Support Provider Interface) is Microsoft's API for authentication and security in Windows. When using SSPI login:
 
-1. **Transparent autentisering**: Applikationen använder dina Windows-credentials automatiskt
-2. **Ingen lösenordsinmatning**: Du behöver inte ange lösenord - perfekt för smartcard/token-användare
-3. **Domän-integration**: Fungerar sömlöst i Active Directory-miljöer
-4. **Kerberos-protokoll**: Säker ticket-baserad autentisering mot vCenter
-5. **SPN-baserad**: Använder Service Principal Name `host/vcenter.domain.local` för autentisering
+1. **Transparent authentication**: Application uses your Windows credentials automatically
+2. **No password input**: You don't need to enter password - perfect for smartcard/token users
+3. **Domain integration**: Works seamlessly in Active Directory environments
+4. **Kerberos protocol**: Secure ticket-based authentication to vCenter
+5. **SPN-based**: Uses Service Principal Name `host/vcenter.domain.local` for authentication
 
-**Tekniska detaljer:**
-- Implementerad via `github.com/alexbrainman/sspi/negotiate`
-- Stöder multi-round SSPI-handshake med `SSPIChallenge`
-- Kompatibel med både PowerCLI och standard govmomi-sessions
-- Endast tillgänglig på Windows-plattformen (stub på Linux/macOS)
+**Technical details:**
+- Implemented via `github.com/alexbrainman/sspi/negotiate`
+- Supports multi-round SSPI handshake with `SSPIChallenge`
+- Compatible with both PowerCLI and standard govmomi sessions
+- Only available on Windows platform (stub on Linux/macOS)
 
-## Felsökning
+## Troubleshooting
 
-### Debug-loggning
-För detaljerad troubleshooting, starta applikationen med debug-flaggan:
+### Debug Logging
+For detailed troubleshooting, start the application with the debug flag:
 ```bash
 ./osupgrader-gui -d
 ```
 
-Detta skapar `debuglogg.txt` i samma mapp som programmet med:
-- Alla API-anrop till vCenter
-- Guest operations-detaljer
-- Autentiseringsförsök (username och lösenordslängd, men INTE lösenordet)
-- PowerShell script-exekvering
-- Snapshot-operationer
-- ISO-montering/demontering
-- Alla fel med stack traces
+This creates `debuglogg.txt` in the same folder as the program with:
+- All API calls to vCenter
+- Guest operations details
+- Authentication attempts (username and password length, but NOT the password)
+- PowerShell script execution
+- Snapshot operations
+- ISO mounting/unmounting
+- All errors with stack traces
 
-**Viktig information i debug-loggen:**
-- Timestamps för alla operationer
-- VM-namn och domän-information
-- Exit codes från PowerShell-script
-- OS-version före och efter uppgradering
+**Important information in debug log:**
+- Timestamps for all operations
+- VM name and domain information
+- Exit codes from PowerShell scripts
+- OS version before and after upgrade
 
-### Inloggning misslyckades
-- **Lösenordsautentisering**:
-  - Kontrollera vCenter-URL och användaruppgifter
-  - Aktivera "Tillåt osignerade certifikat" om self-signed cert används
-  - Kontrollera nätverksåtkomst till vCenter
-- **SSPI/Kerberos-autentisering**:
-  - Fungerar endast på Windows
-  - Kräver att du är inloggad med ett domänkonto
-  - vCenter-servern måste vara Windows-integrerad (Active Directory)
-  - Kontrollera att Kerberos SPN är korrekt konfigurerad (`host/vcenter.domain.local`)
-  - På Linux används endast lösenordsautentisering
+### Login Failed
+- **Password authentication**:
+  - Check vCenter URL and credentials
+  - Enable "Allow self-signed certificates" if using self-signed cert
+  - Check network access to vCenter
+- **SSPI/Kerberos authentication**:
+  - Only works on Windows
+  - Requires you to be logged in with a domain account
+  - vCenter server must be Windows-integrated (Active Directory)
+  - Check that Kerberos SPN is correctly configured (`host/vcenter.domain.local`)
+  - On Linux, only password authentication is used
 
-### ISO-validering misslyckades
-- Kontrollera att ISO-sökvägen är korrekt: `[datastore1] iso/file.iso`
-- Verifiera att datastoren finns och är tillgänglig
-- Kontrollera att ISO-filen existerar på datastoren
-- Använd debug-loggning för att se exakt vilken datastore som söks
+### ISO Validation Failed
+- Check that ISO path is correct: `[datastore1] iso/file.iso`
+- Verify that datastore exists and is accessible
+- Check that ISO file exists on datastore
+- Use debug logging to see exactly which datastore is being searched
 
-### Autentisering mot guest OS misslyckades
-- **Account lockout-problem**:
-  - Applikationen validerar credentials INNAN uppgradering för att förhindra lockout
-  - Om credentials är felaktiga, får du ett fel omedelbart utan upprepade försök
-- **Multi-domän användning**:
-  - Ange bara användarnamn utan domän (t.ex. `upgrade`)
-  - Systemet lägger automatiskt till VM:ens domän
-  - Kontrollera att VM:ens domän är korrekt i tabellvyn
-  - Om auto-append inte fungerar, använd `DOMAIN\user` eller `user@domain.com`
-- **Debug-tips**:
-  - Kör med `-d` flagga
-  - Kolla `debuglogg.txt` för att se vilket username som faktiskt används
-  - Exempel: `Auto-appended domain to username: upgrade@domain1.local`
+### Guest OS Authentication Failed
+- **Account lockout issues**:
+  - Application validates credentials BEFORE upgrade to prevent lockout
+  - If credentials are incorrect, you get an error immediately without repeated attempts
+- **Multi-domain usage**:
+  - Enter username only without domain (e.g. `upgrade`)
+  - System automatically appends VM's domain
+  - Check that VM's domain is correct in table view
+  - If auto-append doesn't work, use `DOMAIN\user` or `user@domain.com`
+- **Debug tips**:
+  - Run with `-d` flag
+  - Check `debuglogg.txt` to see which username is actually used
+  - Example: `Auto-appended domain to username: upgrade@domain1.local`
 
-### Uppgradering misslyckas
-- Kontrollera att VMware Tools är installerade och körs
-- Verifiera att guest-credentials är korrekta
-- Kontrollera diskutrymme på guest OS (minst 10 GB)
-- Se loggfilen `C:\Windows\Temp\upgrade.log` på guest OS
-- **PowerShell script-problem**:
-  - Kolla `C:\Windows\Temp\setup_stdout.log` och `setup_stderr.log`
-  - Verifiera att setup.exe kördes (kolla PID i debug-loggen)
-  - Kontrollera exit code från PowerShell-script (ska vara 0)
-- **Timeout-problem**:
-  - Standard timeout är 90 minuter
-  - Öka timeout i inställningar om uppgraderingen tar längre tid
-  - Långsamma VMs kan behöva 120-180 minuter
+### Upgrade Fails
+- Check that VMware Tools is installed and running
+- Verify guest credentials are correct
+- Check disk space on guest OS (at least 10 GB)
+- See log file `C:\Windows\Temp\upgrade.log` on guest OS
+- **PowerShell script issues**:
+  - Check `C:\Windows\Temp\setup_stdout.log` and `setup_stderr.log`
+  - Verify that setup.exe ran (check PID in debug log)
+  - Check exit code from PowerShell script (should be 0)
+- **Timeout issues**:
+  - Default timeout is 90 minutes
+  - Increase timeout in settings if upgrade takes longer
+  - Slow VMs may need 120-180 minutes
 
-### Snapshot-hantering
-- **Kan inte hitta snapshots**:
-  - Kontrollera att `snapshot_name_prefix` i config matchar snapshot-namn
-  - Default prefix är `pre-upgrade`
-  - Snapshot-namn format: `pre-upgrade-pre-YYYYMMDD-HHMM`
-- **Borttagning misslyckades**:
-  - Kontrollera att inga andra operationer pågår på VM:en
-  - Verifiera vCenter-permissions för snapshot-borttagning
-  - Vissa snapshots kan vara låsta av backup-jobb
+### Snapshot Management
+- **Cannot find snapshots**:
+  - Check that `snapshot_name_prefix` in config matches snapshot names
+  - Default prefix is `pre-upgrade`
+  - Snapshot name format: `pre-upgrade-pre-YYYYMMDD-HHMM`
+- **Removal failed**:
+  - Check that no other operations are running on the VM
+  - Verify vCenter permissions for snapshot removal
+  - Some snapshots may be locked by backup jobs
 
 ## Changelog
 
@@ -426,7 +439,7 @@ Special thanks to:
 Planned features and improvements:
 - [ ] English language UI (i18n support)
 - [ ] Support for Windows Server Standard edition
-- [ ] Support for Windows Server 2025
+- [x] Support for Windows Server 2025
 - [ ] Automated rollback on failure
 - [ ] Enhanced pre-flight checks
 - [ ] Upgrade history database

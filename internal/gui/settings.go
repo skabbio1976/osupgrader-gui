@@ -26,7 +26,7 @@ func (a *App) showSettingsDialog() {
 	guestPassPlain.Hide()
 
 	// Toggle för att visa/dölja lösenord
-	showPasswordCheck := widget.NewCheck("Visa lösenord", func(checked bool) {
+	showPasswordCheck := widget.NewCheck(a.tr.ShowPassword, func(checked bool) {
 		if checked {
 			guestPassPlain.SetText(guestPassEntry.Text)
 			guestPassEntry.Hide()
@@ -45,9 +45,6 @@ func (a *App) showSettingsDialog() {
 	isoPathEntry := widget.NewEntry()
 	isoPathEntry.SetText(a.config.Defaults.IsoDatastorePath)
 
-	gvlkEntry := widget.NewEntry()
-	gvlkEntry.SetText(a.config.Defaults.Glvk)
-
 	parallelEntry := widget.NewEntry()
 	parallelEntry.SetText(strconv.Itoa(a.config.Upgrade.Parallel))
 	parallelEntry.SetPlaceHolder("10")
@@ -59,14 +56,14 @@ func (a *App) showSettingsDialog() {
 	diskCheckEntry := widget.NewEntry()
 	diskCheckEntry.SetText(strconv.Itoa(a.config.Upgrade.PrecheckDiskGB))
 
-	skipMemoryCheck := widget.NewCheck("Hoppa över minne i snapshot", nil)
+	skipMemoryCheck := widget.NewCheck(a.tr.SkipMemoryInSnapshot, nil)
 	skipMemoryCheck.SetChecked(a.config.Defaults.SkipMemoryInSnapshot)
 
-	rebootCheck := widget.NewCheck("Starta om efter uppgradering", nil)
+	rebootCheck := widget.NewCheck(a.tr.RebootAfterUpgrade, nil)
 	rebootCheck.SetChecked(a.config.Upgrade.Reboot)
 
 	// Dark mode toggle
-	darkModeCheck := widget.NewCheck("Dark mode", func(checked bool) {
+	darkModeCheck := widget.NewCheck(a.tr.DarkMode, func(checked bool) {
 		if checked {
 			a.fyneApp.Settings().SetTheme(&darkTheme{})
 		} else {
@@ -76,11 +73,22 @@ func (a *App) showSettingsDialog() {
 	})
 	darkModeCheck.SetChecked(a.config.UI.DarkMode)
 
+	// Language selection
+	languageSelect := widget.NewRadioGroup([]string{a.tr.LanguageEnglish, a.tr.LanguageSwedish}, func(selected string) {
+		// No action here, will be handled on save
+	})
+	// Set current language
+	if a.config.UI.Language == "sv" {
+		languageSelect.SetSelected(a.tr.LanguageSwedish)
+	} else {
+		languageSelect.SetSelected(a.tr.LanguageEnglish)
+	}
+
 	// Container för password-fält (stacked)
 	passContainer := container.NewStack(guestPassEntry, guestPassPlain)
 
 	// Info text för parallella uppgraderingar
-	parallelInfo := widget.NewLabel("Antal VMs som uppgraderas samtidigt (högt värde = snabbare för många VMs)")
+	parallelInfo := widget.NewLabel(a.tr.ParallelUpgradesInfo)
 	parallelInfo.Wrapping = fyne.TextWrapWord
 
 	// Timeout-inställningar
@@ -104,45 +112,47 @@ func (a *App) showSettingsDialog() {
 	}
 
 	guestTab := container.NewVScroll(container.NewVBox(
-		labeled("Guest admin användare", guestUserEntry),
-		labeled("Guest admin lösenord", passContainer),
+		labeled(a.tr.GuestUsername, guestUserEntry),
+		labeled(a.tr.GuestPassword, passContainer),
 		showPasswordCheck,
 		widget.NewSeparator(),
-		labeled("Snapshot-prefix", snapshotPrefixEntry),
-		labeled("ISO datastore path", isoPathEntry),
-		labeled("Windows GVLK-nyckel", gvlkEntry),
+		labeled(a.tr.SnapshotPrefix, snapshotPrefixEntry),
+		labeled(a.tr.ISOPath, isoPathEntry),
 	))
 
 	upgradeTab := container.NewVScroll(container.NewVBox(
-		labeled("Parallella uppgraderingar", parallelEntry),
+		labeled(a.tr.ParallelUpgrades, parallelEntry),
 		parallelInfo,
-		labeled("Timeout (minuter)", timeoutEntry),
-		labeled("Disk precheck (GB)", diskCheckEntry),
+		labeled(a.tr.TimeoutMinutes, timeoutEntry),
+		labeled(a.tr.DiskPrecheckGB, diskCheckEntry),
 		skipMemoryCheck,
 		rebootCheck,
 	))
 
 	timeoutGrid := container.NewGridWithColumns(2,
-		labeled("Signal script (sekunder)", signalScriptTimeoutEntry),
-		labeled("Signal filer (minuter)", signalFilesTimeoutEntry),
-		labeled("OS-version polling (minuter)", targetOsEntry),
-		labeled("Power-off timeout (minuter)", powerOffEntry),
+		labeled(a.tr.SignalScriptSeconds, signalScriptTimeoutEntry),
+		labeled(a.tr.SignalFilesMinutes, signalFilesTimeoutEntry),
+		labeled(a.tr.OSVersionPollingMinutes, targetOsEntry),
+		labeled(a.tr.PowerOffTimeoutMinutes, powerOffEntry),
 	)
 
 	timeoutsTab := container.NewVScroll(container.NewVBox(
-		widget.NewLabel("Alla timeout-värden kan justeras nedan"),
+		widget.NewLabel(a.tr.TimeoutsDescription),
 		timeoutGrid,
 	))
 
 	uiTab := container.NewVScroll(container.NewVBox(
+		widget.NewLabel(a.tr.Language+":"),
+		languageSelect,
+		widget.NewSeparator(),
 		darkModeCheck,
 	))
 
 	tabs := container.NewAppTabs(
-		container.NewTabItem("Guest & ISO", guestTab),
-		container.NewTabItem("Upgrade", upgradeTab),
-		container.NewTabItem("Timeouts", timeoutsTab),
-		container.NewTabItem("UI", uiTab),
+		container.NewTabItem(a.tr.TabGuestISO, guestTab),
+		container.NewTabItem(a.tr.TabUpgrade, upgradeTab),
+		container.NewTabItem(a.tr.TabTimeouts, timeoutsTab),
+		container.NewTabItem(a.tr.TabUI, uiTab),
 	)
 
 	saveAction := func() {
@@ -155,7 +165,6 @@ func (a *App) showSettingsDialog() {
 
 		a.config.Defaults.SnapshotNamePrefix = snapshotPrefixEntry.Text
 		a.config.Defaults.IsoDatastorePath = isoPathEntry.Text
-		a.config.Defaults.Glvk = gvlkEntry.Text
 		a.config.Defaults.SkipMemoryInSnapshot = skipMemoryCheck.Checked
 		a.config.Upgrade.Reboot = rebootCheck.Checked
 
@@ -182,17 +191,28 @@ func (a *App) showSettingsDialog() {
 			a.config.Timeouts.PowerOffMinutes = value
 		}
 
+		// Handle language change
+		newLang := "en"
+		if languageSelect.Selected == a.tr.LanguageSwedish {
+			newLang = "sv"
+		}
+		if newLang != a.config.UI.Language {
+			a.SetLanguage(newLang)
+			// Show message that restart is needed for full effect
+			dialog.ShowInformation(a.tr.SettingsSaved, a.tr.SettingsSavedMessage+"\n\nNote: Please restart the application for all language changes to take effect.", a.window)
+		}
+
 		if err := config.Save(a.config); err != nil {
 			dialog.ShowError(err, a.window)
 		} else {
-			dialog.ShowInformation("Inställningar sparade", "Konfigurationen har sparats (guest password sparas endast i minnet)", a.window)
+			dialog.ShowInformation(a.tr.SettingsSaved, a.tr.SettingsSavedMessage, a.window)
 		}
 	}
 
-	saveButton := widget.NewButton("Spara", saveAction)
+	saveButton := widget.NewButton(a.tr.SaveButton, saveAction)
 
 	var settingsDialog dialog.Dialog
-	closeButton := widget.NewButton("Stäng", func() {
+	closeButton := widget.NewButton(a.tr.CloseButton, func() {
 		if settingsDialog != nil {
 			settingsDialog.Hide()
 		}
@@ -201,13 +221,13 @@ func (a *App) showSettingsDialog() {
 	buttonRow := container.NewHBox(layout.NewSpacer(), saveButton, closeButton)
 
 	header := container.NewVBox(
-		widget.NewLabelWithStyle("Inställningar", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle(a.tr.SettingsTitle, fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewSeparator(),
 	)
 
 	content := container.NewBorder(header, buttonRow, nil, nil, tabs)
 
-	settingsDialog = dialog.NewCustomWithoutButtons("Inställningar", content, a.window)
+	settingsDialog = dialog.NewCustomWithoutButtons(a.tr.SettingsTitle, content, a.window)
 	settingsDialog.Resize(fyne.NewSize(900, 700))
 	settingsDialog.Show()
 }

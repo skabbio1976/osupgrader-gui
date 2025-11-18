@@ -25,14 +25,14 @@ func (a *App) showLoginScreen() {
 	}
 
 	passwordEntry := widget.NewPasswordEntry()
-	passwordEntry.SetPlaceHolder("Lösenord")
+	passwordEntry.SetPlaceHolder(a.tr.Password)
 
-	insecureCheck := widget.NewCheck("Tillåt osignerade certifikat", nil)
+	insecureCheck := widget.NewCheck(a.tr.AllowUnsignedCerts, nil)
 	insecureCheck.SetChecked(a.config.VCenter.Insecure)
 
 	// Autentiseringsmetod
-	authMethodSelect := widget.NewRadioGroup([]string{"Lösenord", "Windows SSPI/Kerberos"}, func(selected string) {
-		if selected == "Windows SSPI/Kerberos" {
+	authMethodSelect := widget.NewRadioGroup([]string{a.tr.AuthPassword, a.tr.AuthSSPI}, func(selected string) {
+		if selected == a.tr.AuthSSPI {
 			usernameEntry.Disable()
 			passwordEntry.Disable()
 		} else {
@@ -40,21 +40,21 @@ func (a *App) showLoginScreen() {
 			passwordEntry.Enable()
 		}
 	})
-	authMethodSelect.SetSelected("Lösenord")
+	authMethodSelect.SetSelected(a.tr.AuthPassword)
 	if a.config.VCenter.Mode == "sspi" {
-		authMethodSelect.SetSelected("Windows SSPI/Kerberos")
+		authMethodSelect.SetSelected(a.tr.AuthSSPI)
 	}
 
 	statusLabel := widget.NewLabel("")
 
 	// Login-knapp (deklarera först)
 	var loginBtn *widget.Button
-	loginBtn = widget.NewButton("Logga in", func() {
+	loginBtn = widget.NewButton(a.tr.LoginButton, func() {
 		host := hostEntry.Text
 		authMethod := authMethodSelect.Selected
 
 		if host == "" {
-			dialog.ShowError(fmt.Errorf("vCenter host måste anges"), a.window)
+			dialog.ShowError(fmt.Errorf("%s", a.tr.ErrorHostRequired), a.window)
 			return
 		}
 
@@ -65,14 +65,14 @@ func (a *App) showLoginScreen() {
 		var client *vcenter.Client
 		var err error
 
-		if authMethod == "Windows SSPI/Kerberos" {
+		if authMethod == a.tr.AuthSSPI {
 			// SSPI-inloggning
 			if usernameEntry.Text != "" {
 				a.config.VCenter.Username = usernameEntry.Text
 			}
 			a.config.VCenter.Mode = "sspi"
 
-			statusLabel.SetText("Loggar in med SSPI/Kerberos...")
+			statusLabel.SetText(a.tr.ConnectingSSPI)
 			loginBtn.Disable()
 
 			// Logga in i bakgrunden
@@ -81,19 +81,19 @@ func (a *App) showLoginScreen() {
 				if err != nil {
 					statusLabel.SetText("")
 					loginBtn.Enable()
-					dialog.ShowError(fmt.Errorf("SSPI-inloggning misslyckades: %v - OBS: SSPI/Kerberos fungerar endast på Windows och kräver att du är inloggad med ett domänkonto", err), a.window)
+					dialog.ShowError(fmt.Errorf(a.tr.ErrorSSPIFailed, err), a.window)
 					return
 				}
 
 				a.SetClient(client)
-				statusLabel.SetText("Inloggad! Hämtar VMs...")
+				statusLabel.SetText(a.tr.LoadingVMs)
 
 				// Hämta VMs
 				vms, err := vcenter.GetVMInfos()
 				if err != nil {
 					statusLabel.SetText("")
 					loginBtn.Enable()
-					dialog.ShowError(fmt.Errorf("kunde inte hämta VMs: %v", err), a.window)
+					dialog.ShowError(fmt.Errorf(a.tr.ErrorLoadVMsFailed, err), a.window)
 					return
 				}
 
@@ -108,14 +108,14 @@ func (a *App) showLoginScreen() {
 			password := passwordEntry.Text
 
 			if username == "" || password == "" {
-				dialog.ShowError(fmt.Errorf("användarnamn och lösenord måste fyllas i"), a.window)
+				dialog.ShowError(fmt.Errorf("%s", a.tr.ErrorCredsRequired), a.window)
 				return
 			}
 
 			a.config.VCenter.Username = username
 			a.config.VCenter.Mode = "password"
 
-			statusLabel.SetText("Loggar in...")
+			statusLabel.SetText(a.tr.ConnectingStatus)
 			loginBtn.Disable()
 
 			// Logga in i bakgrunden
@@ -124,19 +124,19 @@ func (a *App) showLoginScreen() {
 				if err != nil {
 					statusLabel.SetText("")
 					loginBtn.Enable()
-					dialog.ShowError(fmt.Errorf("inloggning misslyckades: %v", err), a.window)
+					dialog.ShowError(fmt.Errorf(a.tr.ErrorLoginFailed, err), a.window)
 					return
 				}
 
 				a.SetClient(client)
-				statusLabel.SetText("Inloggad! Hämtar VMs...")
+				statusLabel.SetText(a.tr.LoadingVMs)
 
 				// Hämta VMs
 				vms, err := vcenter.GetVMInfos()
 				if err != nil {
 					statusLabel.SetText("")
 					loginBtn.Enable()
-					dialog.ShowError(fmt.Errorf("kunde inte hämta VMs: %v", err), a.window)
+					dialog.ShowError(fmt.Errorf(a.tr.ErrorLoadVMsFailed, err), a.window)
 					return
 				}
 
@@ -149,23 +149,23 @@ func (a *App) showLoginScreen() {
 	})
 
 	// Inställningar-knapp
-	settingsBtn := widget.NewButton("Inställningar", func() {
+	settingsBtn := widget.NewButton(a.tr.SettingsButton, func() {
 		a.showSettingsDialog()
 	})
 
 	// Layout
 	form := container.NewVBox(
-		widget.NewLabelWithStyle("OSUpgrader - Windows Server Upgrade Tool", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle(a.tr.AppTitle, fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewLabel(""),
 		widget.NewForm(
-			widget.NewFormItem("vCenter Host:", hostEntry),
+			widget.NewFormItem(a.tr.VCenterHost+":", hostEntry),
 		),
-		widget.NewLabel("Autentiseringsmetod:"),
+		widget.NewLabel(a.tr.AuthMethod+":"),
 		authMethodSelect,
 		widget.NewLabel(""),
 		widget.NewForm(
-			widget.NewFormItem("Användarnamn:", usernameEntry),
-			widget.NewFormItem("Lösenord:", passwordEntry),
+			widget.NewFormItem(a.tr.Username+":", usernameEntry),
+			widget.NewFormItem(a.tr.Password+":", passwordEntry),
 		),
 		insecureCheck,
 		widget.NewLabel(""),

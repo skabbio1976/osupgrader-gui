@@ -152,7 +152,6 @@ func UpgradeSingleVM(vm *object.VirtualMachine, opts UpgradeOptions) error {
 		User: username,
 		Pass: opts.GuestPassword,
 	}
-	// debug.Log("Guest user: %s, GVLK: %s", username, truncateGVLK(opts.Config.Defaults.Glvk))
 
 	// 4.5. Upload all PowerShell scripts to guest
 	debug.Log("Step 4.5: Uploading all PowerShell scripts to guest (BEFORE upgrade)...")
@@ -174,7 +173,7 @@ func UpgradeSingleVM(vm *object.VirtualMachine, opts UpgradeOptions) error {
 	// 5. Guest upgrade script
 	debug.Log("Step 5: Starting guest upgrade script...")
 
-	pid, err := startGuestUpgrade(ctx, vm, gc, opts.Config.Defaults.Glvk)
+	pid, err := startGuestUpgrade(ctx, vm, gc)
 	if err != nil {
 		debug.LogError("StartGuestUpgrade", err, "VM", opts.VMInfo.Name, "GuestUser", opts.GuestUsername)
 		return fmt.Errorf("guest script: %w", err)
@@ -346,12 +345,8 @@ waitForPowerOff:
 	return nil
 }
 
-func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcenter.GuestCreds, gvlk string) (int64, error) {
+func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcenter.GuestCreds) (int64, error) {
 	c := vm.Client()
-
-	if gvlk == "" {
-		return 0, fmt.Errorf("no GVLK key in config")
-	}
 
 	// debug.Log("Creating guest OperationsManager...")
 
@@ -405,17 +400,14 @@ func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcente
 	// debug.Log("Guest credentials validated successfully!")
 
 	// Extract and read PowerShell script from embedded FS
-	scriptTemplate, cleanup, err := extractAndReadPowerShellScript()
+	script, cleanup, err := extractAndReadPowerShellScript()
 	if err != nil {
 		debug.LogError("ExtractPowerShellScript", err)
 		return 0, fmt.Errorf("could not extract PowerShell script: %w", err)
 	}
 	defer cleanup()
 
-	// Replace param([string]$GLVK) with setting variable directly
-	script := strings.Replace(scriptTemplate, "param([string]$GLVK)", fmt.Sprintf("$GLVK = '%s'", gvlk), 1)
-
-	// debug.Log("PowerShell script prepared, GVLK: %s", truncateGVLK(gvlk))
+	// debug.Log("PowerShell script prepared")
 
 	encoded := encodePowerShell(script)
 
@@ -666,7 +658,7 @@ func extractAndReadPowerShellScript() (string, func(), error) {
 	// debug.Log("Extraherar PowerShell-script till %s...", homeDir)
 
 	// Extract file to home directory
-	extractedPath, cleanup, err := efs.ExtractFile(assetsFS, "assets/uppgradeos.ps1", "osupgrader_", homeDir)
+	extractedPath, cleanup, err := efs.ExtractFile(assetsFS, "assets/upgradeos.ps1", "osupgrader_", homeDir)
 	if err != nil {
 		return "", nil, fmt.Errorf("could not extract PowerShell script: %w", err)
 	}
@@ -848,7 +840,7 @@ func executeSignalTaskScript(ctx context.Context, vm *object.VirtualMachine, gc 
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-timeout:
-			debug.Log("[%s] WARNING: Script timeout (%ds), fortsätter ändå...", serverName, timeoutSeconds)
+			debug.Log("[%s] WARNING: Script timeout (%ds), continuing anyway...", serverName, timeoutSeconds)
 			return nil
 		case <-ticker.C:
 			procs, err := pm.ListProcesses(ctx, auth, []int64{pid})

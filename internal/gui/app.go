@@ -58,8 +58,9 @@ type App struct {
 	config        *config.AppConfig
 	client        *vcenter.Client
 	vms           []vcenter.VMInfo
-	guestPassword string // Hålls i minnet, sparas ej
-	mockMode      bool   // Mock mode för testing
+	guestPassword string       // Hålls i minnet, sparas ej
+	mockMode      bool         // Mock mode för testing
+	tr            Translations // Current translations
 }
 
 // NewApp skapar en ny GUI-applikation
@@ -109,7 +110,22 @@ func NewApp(debugMode bool, mockMode bool) *App {
 		debug.Log("Light mode enabled")
 	}
 
+	// Load translations based on config language (default to English)
+	lang := a.config.UI.Language
+	if lang == "" {
+		lang = "en" // Default to English
+	}
+	a.tr = GetTranslations(lang)
+	debug.Log("Language set to: %s", lang)
+
 	return a
+}
+
+// SetLanguage updates the current language and reloads translations
+func (a *App) SetLanguage(lang string) {
+	a.tr = GetTranslations(lang)
+	a.config.UI.Language = lang
+	debug.Log("Language changed to: %s", lang)
 }
 
 // Run startar applikationen

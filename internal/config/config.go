@@ -22,7 +22,6 @@ type DefaultsConfig struct {
 	SnapshotNamePrefix   string `json:"snapshot_name_prefix"`
 	IsoDatastorePath     string `json:"iso_datastore_path"`
 	SkipMemoryInSnapshot bool   `json:"skip_memory_in_snapshot"`
-	Glvk                 string `json:"glvk"`
 	GuestUsername        string `json:"guest_username,omitempty"`
 }
 
@@ -137,7 +136,6 @@ func createDefaultConfig() *AppConfig {
 			SnapshotNamePrefix:   "pre-upgrade",
 			IsoDatastorePath:     "[datastore1] iso/windows-server-2022.iso",
 			SkipMemoryInSnapshot: true,
-			Glvk:                 "WX4NM-KYWYW-QJJR4-XV3QB-6VM33",
 			GuestUsername:        "Administrator",
 		},
 		Upgrade: UpgradeConfig{
@@ -157,7 +155,7 @@ func createDefaultConfig() *AppConfig {
 			File:  "osupgrader.log",
 		},
 		UI: UIConfig{
-			Language: "sv",
+			Language: "en", // Default to English
 			DarkMode: false,
 		},
 	}
