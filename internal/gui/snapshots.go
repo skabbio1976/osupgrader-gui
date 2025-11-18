@@ -238,29 +238,32 @@ func (a *App) showSnapshotManagementScreen() {
 			),
 		)
 		confirmContent.Resize(fyne.NewSize(400, 0)) // Minimum width
+		// ShowCustomConfirm parameter order: (title, confirm, dismiss, content, callback, parent)
+		// - param 2 = confirm button label ("Ja")
+		// - param 3 = dismiss button label ("Nej")
+		// Callback receives true when confirm clicked, false when dismiss clicked
 		dialog.ShowCustomConfirm(a.tr.RemoveConfirmTitle,
-			a.tr.ConfirmNo, a.tr.ConfirmYes,
+			a.tr.ConfirmYes, a.tr.ConfirmNo, // confirm="Ja", dismiss="Nej"
 			confirmContent,
 			func(confirmed bool) {
 				debug.Log("Dialog callback triggered with confirmed=%v", confirmed)
 
-				if !confirmed {
+				if confirmed {
+					debug.Log("User clicked 'Ja' (confirm), proceeding with removal, checking client...")
+					// Check client before starting removal
+					client := a.GetClient()
+					if client == nil {
+						debug.LogError("GetClient", fmt.Errorf("no active client"), "")
+						dialog.ShowError(fmt.Errorf("ingen aktiv vCenter-anslutning"), a.window)
+						return
+					}
+
+					debug.Log("Client OK, starting removal goroutine...")
+					// Ta bort snapshots
+					go a.removeSelectedSnapshots(client, filteredSnapshots, selectedSnapshots, statusLabel, selectAllBtn, deselectAllBtn, removeBtn)
+				} else {
 					debug.Log("User clicked 'Nej' (dismiss), aborting")
-					return
 				}
-
-				debug.Log("User clicked 'Ja' (confirm), checking client...")
-				// Check client before starting removal
-				client := a.GetClient()
-				if client == nil {
-					debug.LogError("GetClient", fmt.Errorf("no active client"), "")
-					dialog.ShowError(fmt.Errorf("ingen aktiv vCenter-anslutning"), a.window)
-					return
-				}
-
-				debug.Log("Client OK, starting removal goroutine...")
-				// Ta bort snapshots
-				go a.removeSelectedSnapshots(client, filteredSnapshots, selectedSnapshots, statusLabel, selectAllBtn, deselectAllBtn, removeBtn)
 			}, a.window)
 	})
 	removeBtn.Disable()

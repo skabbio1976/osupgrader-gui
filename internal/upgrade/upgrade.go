@@ -276,20 +276,6 @@ waitForPowerOff:
 	// Short wait before continuing so VMware Tools can initialize
 	time.Sleep(20 * time.Second)
 
-	// 8. ProcessMonitor is temporarily disabled because it completes long before OS is ready to log in
-	debug.Log("Step 8: Skipping ProcessMonitor (disabled; completes before OS logon)")
-	/*
-		// This step implicitly waits for VMware Tools to be available and OS to be up
-		debug.Log("Step 8: Running ProcessMonitor to verify critical Windows processes...")
-		if err := runProcessMonitor(ctx, vm, gc, opts.VMInfo.Name, opts.Config.Timeouts); err != nil {
-			debug.LogError("RunProcessMonitor", err, "VM", opts.VMInfo.Name)
-			// Not critical - continue anyway
-			debug.Log("WARNING: ProcessMonitor failed, continuing anyway...")
-		} else {
-			debug.LogSuccess("ProcessMonitorCompleted", "VM", opts.VMInfo.Name)
-		}
-	*/
-
 	// 8.5. Verify that OS version matches target version
 	targetOS := []string{"windows server 2022", "windows server 2025"}
 	debug.Log("Step 8.5: Validating guest OS version against targets: %v...", targetOS)
@@ -298,23 +284,6 @@ waitForPowerOff:
 		return fmt.Errorf("os version: %w", err)
 	}
 	debug.LogSuccess("TargetOSDetected", "VM", opts.VMInfo.Name)
-
-	// 8.6. SetupEventVerification is temporarily disabled as event log updates long before login time
-	debug.Log("Step 8.6: Skipping SetupEventVerification (disabled; events appear before OS logon)")
-	/*
-		eventLookback := time.Duration(opts.Config.Timeouts.EventLogMinutes) * time.Minute
-		if eventLookback <= 0 {
-			eventLookback = 10 * time.Minute
-		}
-		debug.Log("Step 8.6: Checking Windows Setup event log for completion markers (lookback: %v)...", eventLookback)
-		eventCtx, eventCancel := context.WithTimeout(ctx, eventLookback)
-		defer eventCancel()
-		if err := verifySetupCompletionEvent(eventCtx, vm, gc, opts.VMInfo.Name, upgradeStart, eventLookback); err != nil {
-			debug.LogError("SetupEventVerification", err, "VM", opts.VMInfo.Name)
-			return fmt.Errorf("setup event verification: %w", err)
-		}
-		debug.LogSuccess("SetupEventDetected", "VM", opts.VMInfo.Name)
-	*/
 
 	// 9. Verify Windows is ready by waiting for signal file from scheduled task
 	debug.Log("Step 9: Waiting for post-reboot task signal file...")
