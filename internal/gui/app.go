@@ -8,10 +8,10 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/theme"
+	"github.com/skabbio1976/osupgrader-gui/internal/config"
+	"github.com/skabbio1976/osupgrader-gui/internal/debug"
+	"github.com/skabbio1976/osupgrader-gui/internal/vcenter"
 	"github.com/vmware/govmomi/vim25/types"
-	"github.com/yourusername/osupgrader-gui/internal/config"
-	"github.com/yourusername/osupgrader-gui/internal/debug"
-	"github.com/yourusername/osupgrader-gui/internal/vcenter"
 )
 
 // Custom themes för att undvika deprecated warnings

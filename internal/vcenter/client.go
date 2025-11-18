@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/skabbio1976/osupgrader-gui/internal/config"
 	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/soap"
-	"github.com/yourusername/osupgrader-gui/internal/config"
 )
 
 var (

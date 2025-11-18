@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/skabbio1976/osupgrader-gui/internal/vcenter"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
-	"github.com/yourusername/osupgrader-gui/internal/vcenter"
 )
 
 // ValidateISOPath checks that ISO path has correct format and that the datastore exists

@@ -14,13 +14,13 @@ import (
 	"unicode/utf16"
 
 	efs "github.com/skabbio1976/eFS"
+	"github.com/skabbio1976/osupgrader-gui/internal/config"
+	"github.com/skabbio1976/osupgrader-gui/internal/debug"
+	"github.com/skabbio1976/osupgrader-gui/internal/vcenter"
 	"github.com/vmware/govmomi/guest"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
-	"github.com/yourusername/osupgrader-gui/internal/config"
-	"github.com/yourusername/osupgrader-gui/internal/debug"
-	"github.com/yourusername/osupgrader-gui/internal/vcenter"
 )
 
 //go:embed assets/*.ps1

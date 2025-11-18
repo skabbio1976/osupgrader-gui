@@ -8,7 +8,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
-	"github.com/yourusername/osupgrader-gui/internal/config"
+	"github.com/skabbio1976/osupgrader-gui/internal/config"
 )
 
 func (a *App) showSettingsDialog() {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/skabbio1976/osupgrader-gui/internal/gui"
 	"github.com/spf13/pflag"
-	"github.com/yourusername/osupgrader-gui/internal/gui"
 )
 
 var (

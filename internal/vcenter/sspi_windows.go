@@ -14,7 +14,7 @@ import (
 	vimmethods "github.com/vmware/govmomi/vim25/methods"
 	vimsoap "github.com/vmware/govmomi/vim25/soap"
 	vimtypes "github.com/vmware/govmomi/vim25/types"
-	"github.com/yourusername/osupgrader-gui/internal/config"
+	"github.com/skabbio1976/osupgrader-gui/internal/config"
 )
 
 // LoginSSPI etablerar en vCenter-session med Windows-integrerad autentisering (Kerberos/SSPI)

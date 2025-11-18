@@ -10,10 +10,10 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
+	"github.com/skabbio1976/osupgrader-gui/internal/debug"
+	"github.com/skabbio1976/osupgrader-gui/internal/upgrade"
+	"github.com/skabbio1976/osupgrader-gui/internal/vcenter"
 	"github.com/vmware/govmomi/object"
-	"github.com/yourusername/osupgrader-gui/internal/debug"
-	"github.com/yourusername/osupgrader-gui/internal/upgrade"
-	"github.com/yourusername/osupgrader-gui/internal/vcenter"
 )
 
 func (a *App) showUpgradeScreen(selectedVMs map[string]bool) {

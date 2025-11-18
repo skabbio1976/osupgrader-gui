@@ -5,7 +5,7 @@ package vcenter
 import (
 	"errors"
 
-	"github.com/yourusername/osupgrader-gui/internal/config"
+	"github.com/skabbio1976/osupgrader-gui/internal/config"
 )
 
 var ErrSSPINotSupported = errors.New("SSPI is only supported on Windows")
