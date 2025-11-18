@@ -1,6 +1,6 @@
 # OSUpgrader GUI
 
-En grafisk version av OSUpgrader - ett automatiserat verktyg för att uppgradera Windows Server 2016/2019 till Windows Server 2022 Datacenter via VMware vCenter/vSphere.
+Ett automatiserat verktyg för att uppgradera Windows Server 2016/2019 till Windows Server 2022 Datacenter via VMware vCenter/vSphere.
 
 ## Översikt
 
@@ -387,13 +387,9 @@ Detta skapar `debuglogg.txt` i samma mapp som programmet med:
   - Verifiera vCenter-permissions för snapshot-borttagning
   - Vissa snapshots kan vara låsta av backup-jobb
 
-## Relaterade projekt
-
-- **osupgrader** - TUI-version med batch-läge för CLI-automatisering
-
 ## Licens
 
-Internt projekt - kontakta projektägaren för licensinformation.
+MIT
 
 ## Support
 
