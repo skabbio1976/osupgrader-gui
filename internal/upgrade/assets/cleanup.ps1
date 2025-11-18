@@ -2,10 +2,10 @@ if((test-path "C:\Temp\osupgrader_ready.txt")){
    # Remove-Item "C:\Temp\osupgrader_ready.txt" -Force -ErrorAction SilentlyContinue
 }
 
-Ta bort scheduled task
+# Remove scheduled task
 schtasks.exe /Delete /TN "OSUpgraderSignal" /F
 
-ta bort uploaded files
+# Remove uploaded files
 if((test-path "C:\Temp\createsignaltasks.ps1")){
    Remove-Item "C:\Temp\createsignaltasks.ps1" -Force -ErrorAction SilentlyContinue
 }

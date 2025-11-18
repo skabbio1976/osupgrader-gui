@@ -1,10 +1,12 @@
 # OSUpgrader GUI
 
-Ett automatiserat verktyg för att uppgradera Windows Server 2016/2019 till Windows Server 2022 Datacenter via VMware vCenter/vSphere.
+An automated tool for upgrading Windows Server 2016/2019 to Windows Server 2022 Datacenter via VMware vCenter/vSphere.
 
-## Översikt
+> **Origin Story**: This tool was created to help IT operations teams facing the challenge of upgrading 1000+ Windows Servers before year-end. What started as an internal solution became popular among other teams facing the same problem. Now it's an open-source contribution to help operations teams worldwide! 🚀
 
-OSUpgrader GUI är en Fyne-baserad grafisk applikation som gör det enkelt att uppgradera flera Windows Server-VMs samtidigt via en intuitiv användargränssnitt.
+## Overview
+
+OSUpgrader GUI is a Fyne-based graphical application that makes it easy to upgrade multiple Windows Server VMs simultaneously through an intuitive user interface.
 
 ## Funktioner
 
@@ -387,10 +389,59 @@ Detta skapar `debuglogg.txt` i samma mapp som programmet med:
   - Verifiera vCenter-permissions för snapshot-borttagning
   - Vissa snapshots kan vara låsta av backup-jobb
 
-## Licens
+## Changelog
 
-MIT
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
 
-## Support
+## License
 
-För buggrapporter och funktionsförfrågningar, kontakta utvecklingsteamet.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+We welcome contributions from the community! Whether you're fixing bugs, adding features, or improving documentation, your help makes OSUpgrader better for everyone.
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on:
+- How to report bugs
+- How to suggest enhancements
+- Development workflow
+- Code style guidelines
+- Pull request process
+
+## Community & Support
+
+- **Bug Reports & Feature Requests**: Open an issue on GitHub using our [issue templates](.github/ISSUE_TEMPLATE/)
+- **Questions**: Use GitHub Discussions or open an issue with the `question` label
+- **Security Issues**: Please report privately to maintainers - see [SECURITY.md](SECURITY.md)
+- **Contributing**: Read our [Contributing Guidelines](CONTRIBUTING.md)
+- **Code of Conduct**: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+
+## Acknowledgments
+
+Special thanks to:
+- All the IT operations teams who provided feedback and use cases
+- Contributors who help improve this tool
+- The teams facing tight upgrade deadlines that inspired this project
+
+## Roadmap
+
+Planned features and improvements:
+- [ ] English language UI (i18n support)
+- [ ] Support for Windows Server Standard edition
+- [ ] Support for Windows Server 2025
+- [ ] Automated rollback on failure
+- [ ] Enhanced pre-flight checks
+- [ ] Upgrade history database
+- [ ] REST API for automation
+
+Want to contribute to any of these? Check out [CONTRIBUTING.md](CONTRIBUTING.md)!
+
+---
+
+**Made with ❤️ for IT Operations teams everywhere**
+
+If this tool saved you time or helped your organization, consider:
+- ⭐ Starring the repository
+- 🐛 Reporting bugs you encounter
+- 💡 Suggesting improvements
+- 🤝 Contributing code or documentation

@@ -15,34 +15,34 @@ var (
 	isEnabled bool
 )
 
-// Init initierar debug-loggning
+// Init initializes debug logging
 func Init() error {
 	logMutex.Lock()
 	defer logMutex.Unlock()
 
 	if logFile != nil {
-		return nil // Redan initierad
+		return nil // Already initialized
 	}
 
-	// Hitta binärens katalog
+	// Find binary directory
 	exePath, err := os.Executable()
 	if err != nil {
-		return fmt.Errorf("kunde inte hitta binärens sökväg: %w", err)
+		return fmt.Errorf("could not find binary path: %w", err)
 	}
 	exeDir := filepath.Dir(exePath)
 
-	// Skapa loggfil i samma mapp som binären
+	// Create log file in same directory as binary
 	logPath = filepath.Join(exeDir, "debuglogg.txt")
 
-	// Öppna/skapa loggfil (append mode)
+	// Open/create log file (append mode)
 	logFile, err = os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
-		return fmt.Errorf("kunde inte skapa loggfil %s: %w", logPath, err)
+		return fmt.Errorf("could not create log file %s: %w", logPath, err)
 	}
 
 	isEnabled = true
 
-	// Logga start
+	// Log start
 	writeLog("=== DEBUG LOGGING STARTED ===")
 	writeLog("Log file: %s", logPath)
 	writeLog("Timestamp: %s", time.Now().Format("2006-01-02 15:04:05"))
@@ -51,7 +51,7 @@ func Init() error {
 	return nil
 }
 
-// Close stänger loggfilen
+// Close closes the log file
 func Close() {
 	logMutex.Lock()
 	defer logMutex.Unlock()
@@ -66,7 +66,7 @@ func Close() {
 	isEnabled = false
 }
 
-// Log skriver ett debug-meddelande
+// Log writes a debug message
 func Log(format string, args ...interface{}) {
 	if !isEnabled {
 		return
@@ -78,7 +78,7 @@ func Log(format string, args ...interface{}) {
 	writeLog(format, args...)
 }
 
-// LogError skriver ett felmeddelande
+// LogError writes an error message
 func LogError(context string, err error, details ...interface{}) {
 	if !isEnabled {
 		return
@@ -96,7 +96,7 @@ func LogError(context string, err error, details ...interface{}) {
 	writeLog("")
 }
 
-// LogFunction skriver funktionsanrop med parametrar
+// LogFunction writes function calls with parameters
 func LogFunction(funcName string, params ...interface{}) {
 	if !isEnabled {
 		return
@@ -113,7 +113,7 @@ func LogFunction(funcName string, params ...interface{}) {
 	}
 }
 
-// LogSuccess skriver ett success-meddelande
+// LogSuccess writes a success message
 func LogSuccess(context string, details ...interface{}) {
 	if !isEnabled {
 		return
@@ -131,7 +131,7 @@ func LogSuccess(context string, details ...interface{}) {
 	writeLog("")
 }
 
-// writeLog skriver direkt till loggfilen (utan lock, måste anropas inuti lock)
+// writeLog writes directly to log file (without lock, must be called inside lock)
 func writeLog(format string, args ...interface{}) {
 	if logFile == nil {
 		return
@@ -142,15 +142,15 @@ func writeLog(format string, args ...interface{}) {
 	line := fmt.Sprintf("[%s] %s\n", timestamp, msg)
 
 	logFile.WriteString(line)
-	logFile.Sync() // Flush direkt för att säkerställa att allt skrivs
+	logFile.Sync() // Flush immediately to ensure everything is written
 }
 
-// GetLogPath returnerar sökvägen till loggfilen
+// GetLogPath returns the path to the log file
 func GetLogPath() string {
 	return logPath
 }
 
-// IsEnabled returnerar om debug-loggning är aktiverad
+// IsEnabled returns whether debug logging is enabled
 func IsEnabled() bool {
 	return isEnabled
 }

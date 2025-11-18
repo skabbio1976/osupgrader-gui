@@ -9,7 +9,7 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-// MountISO monterar en ISO till VM:s CD-ROM
+// MountISO mounts an ISO to the VM's CD-ROM
 func MountISO(ctx context.Context, vm *object.VirtualMachine, isoPath string) error {
 	var o mo.VirtualMachine
 	if err := vm.Properties(ctx, vm.Reference(), []string{"config.hardware.device"}, &o); err != nil {
@@ -23,7 +23,7 @@ func MountISO(ctx context.Context, vm *object.VirtualMachine, isoPath string) er
 		}
 	}
 	if cd == nil {
-		return errors.New("ingen CD/DVD-enhet")
+		return errors.New("no CD/DVD device")
 	}
 	cdCopy := *cd
 	cd = &cdCopy
@@ -52,7 +52,7 @@ func MountISO(ctx context.Context, vm *object.VirtualMachine, isoPath string) er
 	return task.Wait(ctx)
 }
 
-// UnmountISO demonterar ISO från VM:s CD-ROM
+// UnmountISO unmounts ISO from the VM's CD-ROM
 func UnmountISO(ctx context.Context, vm *object.VirtualMachine) error {
 	var o mo.VirtualMachine
 	if err := vm.Properties(ctx, vm.Reference(), []string{"config.hardware.device"}, &o); err != nil {
@@ -66,7 +66,7 @@ func UnmountISO(ctx context.Context, vm *object.VirtualMachine) error {
 		}
 	}
 	if cd == nil {
-		return errors.New("ingen CD/DVD-enhet")
+		return errors.New("no CD/DVD device")
 	}
 	cdCopy := *cd
 	cd = &cdCopy

@@ -12,11 +12,11 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-// GetVMInfos hämtar VM-information från vCenter
+// GetVMInfos fetches VM information from vCenter
 func GetVMInfos() ([]VMInfo, error) {
 	c := GetCachedClient()
 	if c == nil {
-		return nil, fmt.Errorf("ingen aktiv govmomi-klient")
+		return nil, fmt.Errorf("no active govmomi client")
 	}
 
 	ctx := context.Background()
@@ -60,7 +60,7 @@ func GetVMInfos() ([]VMInfo, error) {
 	return out, nil
 }
 
-// folderPath bygger full sökväg genom att gå uppåt i trädet
+// folderPath builds full path by traversing up the tree
 func folderPath(ctx context.Context, pc *property.Collector, ref types.ManagedObjectReference) (string, error) {
 	var segments []string
 	current := ref

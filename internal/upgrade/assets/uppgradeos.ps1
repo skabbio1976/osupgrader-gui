@@ -22,13 +22,13 @@ try {
     if ($installationType -eq "Server Core") {
         $installType = 'Core'
         $imageIndex = 3
-        # T.ex. använd sconfig eller dism
+        # E.g. use sconfig or dism
     } elseif ($installationType -eq "Server") {
-        $imageIndex = 4# Anropa GUI-baserad uppgraderingslogik
-        # T.ex. kan använda Windows Update UI eller andra GUI-verktyg
+        $imageIndex = 4# Call GUI-based upgrade logic
+        # E.g. can use Windows Update UI or other GUI tools
     } else {
         exit 1
-        # Hantera edge case
+        # Handle edge case
     }
     $isCore = ($installType -eq 'Core')
     Write-Log "Detected installation type: $installType"

@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// normalizeServerHost tar bort schema (http/https), port och path så endast FQDN/IP återstår
+// normalizeServerHost removes schema (http/https), port and path so only FQDN/IP remains
 func normalizeServerHost(h string) string {
 	hs := strings.TrimSpace(h)
 	if hs == "" {
@@ -14,18 +14,18 @@ func normalizeServerHost(h string) string {
 	if strings.HasPrefix(strings.ToLower(hs), "http://") || strings.HasPrefix(strings.ToLower(hs), "https://") {
 		if u, err := url.Parse(hs); err == nil {
 			hostPart := u.Host
-			// Ta bort port
+			// Remove port
 			if idx := strings.Index(hostPart, ":"); idx != -1 {
 				hostPart = hostPart[:idx]
 			}
 			return hostPart
 		}
 	}
-	// Ta bort path om användaren skrivit t.ex. vcenter.local/sdk
+	// Remove path if user wrote e.g. vcenter.local/sdk
 	if slash := strings.IndexRune(hs, '/'); slash != -1 {
 		hs = hs[:slash]
 	}
-	// Ta bort port om utan schema
+	// Remove port if no schema
 	if idx := strings.Index(hs, ":"); idx != -1 {
 		hs = hs[:idx]
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-// CreateSnapshot skapar en snapshot för en VM
+// CreateSnapshot creates a snapshot for a VM
 func CreateSnapshot(ctx context.Context, vm *object.VirtualMachine, name, description string, memory, quiesce bool) error {
 	task, err := vm.CreateSnapshot(ctx, name, description, memory, quiesce)
 	if err != nil {
@@ -21,19 +21,19 @@ func CreateSnapshot(ctx context.Context, vm *object.VirtualMachine, name, descri
 		return err
 	}
 
-	// Verifiera att snapshot faktiskt skapades
+	// Verify that snapshot was actually created
 	var o mo.VirtualMachine
 	if err := vm.Properties(ctx, vm.Reference(), []string{"snapshot"}, &o); err != nil {
-		return fmt.Errorf("kunde inte verifiera snapshot: %w", err)
+		return fmt.Errorf("could not verify snapshot: %w", err)
 	}
 	if o.Snapshot == nil || o.Snapshot.CurrentSnapshot == nil {
-		return fmt.Errorf("snapshot skapades men verifiering misslyckades")
+		return fmt.Errorf("snapshot was created but verification failed")
 	}
 
 	return nil
 }
 
-// ListSnapshots listar alla snapshots för en VM
+// ListSnapshots lists all snapshots for a VM
 func ListSnapshots(ctx context.Context, vm *object.VirtualMachine, vmName string) ([]SnapshotEntry, error) {
 	var o mo.VirtualMachine
 	if err := vm.Properties(ctx, vm.Reference(), []string{"snapshot"}, &o); err != nil {
@@ -57,11 +57,11 @@ func ListSnapshots(ctx context.Context, vm *object.VirtualMachine, vmName string
 	return out, nil
 }
 
-// RemoveSnapshot tar bort en snapshot
+// RemoveSnapshot removes a snapshot
 func RemoveSnapshot(ctx context.Context, snapRef types.ManagedObjectReference) error {
 	c := GetCachedClient()
 	if c == nil {
-		return errors.New("ingen aktiv klient")
+		return errors.New("no active client")
 	}
 
 	req := &types.RemoveSnapshot_Task{This: snapRef, RemoveChildren: false}
@@ -70,7 +70,7 @@ func RemoveSnapshot(ctx context.Context, snapRef types.ManagedObjectReference) e
 		return fmt.Errorf("RemoveSnapshot_Task: %w", err)
 	}
 	if res == nil || res.Returnval.Type == "" {
-		return fmt.Errorf("tomt svar från RemoveSnapshot_Task")
+		return fmt.Errorf("empty response from RemoveSnapshot_Task")
 	}
 	task := object.NewTask(c, res.Returnval)
 	return task.Wait(ctx)

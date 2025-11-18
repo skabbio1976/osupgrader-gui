@@ -26,7 +26,7 @@ import (
 //go:embed assets/*.ps1
 var assetsFS embed.FS
 
-// UpgradeOptions innehåller alla options för en uppgradering
+// UpgradeOptions contains all options for an upgrade
 type UpgradeOptions struct {
 	VMInfo         vcenter.VMInfo
 	GuestUsername  string
@@ -37,7 +37,7 @@ type UpgradeOptions struct {
 	Config         *config.AppConfig
 }
 
-// UpgradeResult innehåller resultatet av en uppgradering
+// UpgradeResult contains the result of an upgrade
 type UpgradeResult struct {
 	VMName  string
 	Success bool
@@ -45,7 +45,7 @@ type UpgradeResult struct {
 	Steps   []UpgradeStep
 }
 
-// UpgradeStep representerar ett steg i uppgraderingsprocessen
+// UpgradeStep represents a step in the upgrade process
 type UpgradeStep struct {
 	Name      string
 	Status    string // "pending", "in_progress", "completed", "failed"
@@ -54,7 +54,7 @@ type UpgradeStep struct {
 	EndTime   time.Time
 }
 
-// UpgradeSingleVM uppgraderar en enskild VM
+// UpgradeSingleVM upgrades a single VM
 func UpgradeSingleVM(vm *object.VirtualMachine, opts UpgradeOptions) error {
 	// debug.LogFunction("UpgradeSingleVM",
 	// 	"VM", opts.VMInfo.Name,
@@ -68,7 +68,7 @@ func UpgradeSingleVM(vm *object.VirtualMachine, opts UpgradeOptions) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(opts.Config.Upgrade.TimeoutMinutes)*time.Minute)
 	defer cancel()
 
-	// 0. Kontrollera om upgrade redan pågår
+	// 0. Check if upgrade is already in progress
 	// debug.Log("Step 0: Checking if upgrade already in progress...")
 	inProgress, err := CheckUpgradeInProgress(ctx, vm)
 	if err != nil {
@@ -127,20 +127,20 @@ func UpgradeSingleVM(vm *object.VirtualMachine, opts UpgradeOptions) error {
 	}
 	// debug.LogSuccess("MountISO", "VM", opts.VMInfo.Name, "ISOPath", opts.ISOPath)
 
-	// 4. Förbered guest credentials och setup post-reboot signaling FÖRE uppgraderingen
+	// 4. Prepare guest credentials and setup post-reboot signaling BEFORE upgrade
 	// debug.Log("Step 4: Preparing guest credentials and post-reboot signaling...")
 
-	// Bygg username - lägg till domän om den inte redan finns
+	// Build username - add domain if not already present
 	username := opts.GuestUsername
 	if !strings.Contains(username, "\\") && !strings.Contains(username, "@") {
-		// Inget domän-format hittat, lägg till @domain om vi har det
+		// No domain format found, add @domain if we have it
 		if opts.VMInfo.Domain != "" {
-			// Extrahera domän från FQDN (t.ex. srv01.testdom.se -> testdom.se)
+			// Extract domain from FQDN (e.g. srv01.testdom.se -> testdom.se)
 			domain := opts.VMInfo.Domain
 			if strings.Contains(domain, ".") {
 				parts := strings.SplitN(domain, ".", 2)
 				if len(parts) == 2 {
-					domain = parts[1] // Ta bort hostname-delen
+					domain = parts[1] // Remove hostname part
 				}
 			}
 			username = username + "@" + domain
@@ -154,18 +154,18 @@ func UpgradeSingleVM(vm *object.VirtualMachine, opts UpgradeOptions) error {
 	}
 	// debug.Log("Guest user: %s, GVLK: %s", username, truncateGVLK(opts.Config.Defaults.Glvk))
 
-	// 4.5. Ladda upp alla PowerShell-scripts till gästen
+	// 4.5. Upload all PowerShell scripts to guest
 	debug.Log("Step 4.5: Uploading all PowerShell scripts to guest (BEFORE upgrade)...")
 	if err := uploadScriptsToGuest(ctx, vm, gc, opts.VMInfo.Name); err != nil {
 		debug.LogError("UploadScripts", err, "VM", opts.VMInfo.Name)
 		return fmt.Errorf("kunde inte ladda upp scripts: %w", err)
 	}
 
-	// 4.6. Kör createsignaltasks.ps1 för att sätta upp post-reboot signalering
+	// 4.6. Run createsignaltasks.ps1 to set up post-reboot signaling
 	debug.Log("Step 4.6: Setting up post-reboot signal mechanisms (BEFORE upgrade)...")
 	if err := executeSignalTaskScript(ctx, vm, gc, opts.VMInfo.Name, opts.Config.Timeouts); err != nil {
 		debug.LogError("ExecuteSignalTaskScript", err, "VM", opts.VMInfo.Name)
-		// Inte kritiskt - fortsätt ändå, men logga varning
+		// Not critical - continue anyway, but log warning
 		debug.Log("WARNING: Failed to set up signal task script, upgrade will continue but signal detection may fail")
 	} else {
 		debug.LogSuccess("SignalTaskSetup", "VM", opts.VMInfo.Name)
@@ -181,7 +181,7 @@ func UpgradeSingleVM(vm *object.VirtualMachine, opts UpgradeOptions) error {
 	}
 	debug.LogSuccess("StartGuestUpgrade", "VM", opts.VMInfo.Name, "PID", pid)
 
-	// 6. Vänta på att scriptet avslutas
+	// 6. Wait for script to complete
 	debug.Log("Step 6: Waiting for upgrade script to complete (PID: %d)...", pid)
 	exitCode, err := waitForProcessExit(ctx, vm, gc, pid, opts.VMInfo.Name)
 	if err != nil {
@@ -194,12 +194,12 @@ func UpgradeSingleVM(vm *object.VirtualMachine, opts UpgradeOptions) error {
 	}
 	debug.LogSuccess("ScriptCompleted", "VM", opts.VMInfo.Name, "ExitCode", exitCode)
 
-	// 7. Vänta på att gästen stänger av (scriptet är klart men kan ta tid innan Windows stoppar) och hantera shutdown/power cycle
+	// 7. Wait for guest to shut down (script is done but Windows may take time to stop) and handle shutdown/power cycle
 	debug.Log("Step 7: Giving Windows 60 seconds before checking power state...")
 	select {
 	case <-time.After(60 * time.Second):
 	case <-ctx.Done():
-		return fmt.Errorf("avbruten innan shutdown-check hann köras: %w", ctx.Err())
+		return fmt.Errorf("cancelled before shutdown check could run: %w", ctx.Err())
 	}
 
 	shutdownTimeout := time.Duration(opts.Config.Timeouts.PowerOffMinutes) * time.Minute
@@ -256,7 +256,7 @@ waitForPowerOff:
 
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("avbruten innan power on hann köras: %w", ctx.Err())
+		return fmt.Errorf("cancelled before power on could run: %w", ctx.Err())
 	case <-powerOnDelay.C:
 	}
 
@@ -274,24 +274,24 @@ waitForPowerOff:
 	}
 	debug.LogSuccess("PowerOn", "VM", opts.VMInfo.Name)
 
-	// Kort väntan innan vi går vidare så VMware Tools hinner initialiseras
+	// Short wait before continuing so VMware Tools can initialize
 	time.Sleep(20 * time.Second)
 
-	// 8. ProcessMonitor är temporärt inaktiverad eftersom den blir klar långt innan OS går att logga in i
+	// 8. ProcessMonitor is temporarily disabled because it completes long before OS is ready to log in
 	debug.Log("Step 8: Skipping ProcessMonitor (disabled; completes before OS logon)")
 	/*
-		// Detta step väntar implicit på att VMware Tools är tillgängliga och OS är uppe
+		// This step implicitly waits for VMware Tools to be available and OS to be up
 		debug.Log("Step 8: Running ProcessMonitor to verify critical Windows processes...")
 		if err := runProcessMonitor(ctx, vm, gc, opts.VMInfo.Name, opts.Config.Timeouts); err != nil {
 			debug.LogError("RunProcessMonitor", err, "VM", opts.VMInfo.Name)
-			// Inte kritiskt - fortsätt ändå
+			// Not critical - continue anyway
 			debug.Log("WARNING: ProcessMonitor failed, continuing anyway...")
 		} else {
 			debug.LogSuccess("ProcessMonitorCompleted", "VM", opts.VMInfo.Name)
 		}
 	*/
 
-	// 8.5. Verifiera att OS-versionen matchar målversionen
+	// 8.5. Verify that OS version matches target version
 	targetOS := []string{"windows server 2022", "windows server 2025"}
 	debug.Log("Step 8.5: Validating guest OS version against targets: %v...", targetOS)
 	if err := waitForTargetOS(ctx, vm, targetOS, opts.VMInfo.Name, time.Duration(opts.Config.Timeouts.TargetOSMinutes)*time.Minute); err != nil {
@@ -300,7 +300,7 @@ waitForPowerOff:
 	}
 	debug.LogSuccess("TargetOSDetected", "VM", opts.VMInfo.Name)
 
-	// 8.6. SetupEventVerification är temporärt inaktiverad då event-loggen uppdateras långt före inloggningstid
+	// 8.6. SetupEventVerification is temporarily disabled as event log updates long before login time
 	debug.Log("Step 8.6: Skipping SetupEventVerification (disabled; events appear before OS logon)")
 	/*
 		eventLookback := time.Duration(opts.Config.Timeouts.EventLogMinutes) * time.Minute
@@ -317,16 +317,16 @@ waitForPowerOff:
 		debug.LogSuccess("SetupEventDetected", "VM", opts.VMInfo.Name)
 	*/
 
-	// 9. Verifiera att Windows är redo genom att vänta på signalfilen från scheduled task
+	// 9. Verify Windows is ready by waiting for signal file from scheduled task
 	debug.Log("Step 9: Waiting for post-reboot task signal file...")
 	if err := waitForPostRebootSignals(ctx, vm, gc, opts.VMInfo.Name, opts.Config.Timeouts); err != nil {
-		// Kontrollera om det är ett timeout-fel
+		// Check if it's a timeout error
 		if strings.Contains(err.Error(), "LOGONUI_TIMEOUT") {
-			// Logga varning men fortsätt ändå
+			// Log warning but continue anyway
 			debug.Log("WARNING: Task signal file not created within timeout - server %s should be checked manually", opts.VMInfo.Name)
 			debug.Log("WARNING: %v", err)
 		} else {
-			// Annat fel, avbryt uppgraderingen
+			// Other error, abort upgrade
 			debug.LogError("WaitForSignalFiles", err, "VM", opts.VMInfo.Name)
 			return fmt.Errorf("signal file check: %w", err)
 		}
@@ -350,25 +350,25 @@ func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcente
 	c := vm.Client()
 
 	if gvlk == "" {
-		return 0, fmt.Errorf("ingen GVLK-nyckel i config")
+		return 0, fmt.Errorf("no GVLK key in config")
 	}
 
 	// debug.Log("Creating guest OperationsManager...")
 
-	// Skapa OperationsManager för guest operations
+	// Create OperationsManager for guest operations
 	opsMgr := guest.NewOperationsManager(c, vm.Reference())
 
-	// Hämta ProcessManager
+	// Get ProcessManager
 	pm, err := opsMgr.ProcessManager(ctx)
 	if err != nil {
 		debug.LogError("GetProcessManager", err)
-		return 0, fmt.Errorf("kunde inte få ProcessManager: %w", err)
+		return 0, fmt.Errorf("could not get ProcessManager: %w", err)
 	}
 
 	// debug.Log("ProcessManager created successfully")
 
-	// Validera credentials FÖRST innan vi försöker köra något
-	// Detta förhindrar account lockout från upprepade misslyckade försök
+	// Validate credentials FIRST before trying to run anything
+	// This prevents account lockout from repeated failed attempts
 	auth := &types.NamePasswordAuthentication{Username: gc.User, Password: gc.Pass}
 
 	// debug.Log("=== AUTHENTICATION DEBUG ===")
@@ -380,39 +380,39 @@ func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcente
 	// debug.Log("Username contains @: %v", strings.Contains(gc.User, "@"))
 	// debug.Log("===========================")
 
-	// Hämta AuthManager för att validera credentials
+	// Get AuthManager to validate credentials
 	am, err := opsMgr.AuthManager(ctx)
 	if err != nil {
 		debug.LogError("GetAuthManager", err)
-		return 0, fmt.Errorf("kunde inte få AuthManager: %w", err)
+		return 0, fmt.Errorf("could not get AuthManager: %w", err)
 	}
 
 	// debug.Log("Calling ValidateCredentials with:")
 	// debug.Log("  auth.Username = %q", auth.Username)
 	// debug.Log("  auth.Password = %q", auth.Password) // Kommenterad av säkerhetsskäl
 
-	// Validera credentials innan vi försöker starta något
+	// Validate credentials before trying to start anything
 	err = am.ValidateCredentials(ctx, auth)
 	if err != nil {
 		debug.LogError("ValidateCredentials", err,
 			"Username", gc.User,
 			"PasswordLength", len(gc.Pass),
 		)
-		return 0, fmt.Errorf("autentisering misslyckades för användare '%s': %w", gc.User, err)
+		return 0, fmt.Errorf("authentication failed for user '%s': %w", gc.User, err)
 	}
 
 	// debug.LogSuccess("ValidateCredentials", "Username", gc.User)
 	// debug.Log("Guest credentials validated successfully!")
 
-	// Extrahera och läs in PowerShell-scriptet från embedded FS
+	// Extract and read PowerShell script from embedded FS
 	scriptTemplate, cleanup, err := extractAndReadPowerShellScript()
 	if err != nil {
 		debug.LogError("ExtractPowerShellScript", err)
-		return 0, fmt.Errorf("kunde inte extrahera PowerShell-script: %w", err)
+		return 0, fmt.Errorf("could not extract PowerShell script: %w", err)
 	}
 	defer cleanup()
 
-	// Ersätt param([string]$GLVK) med att sätta variabeln direkt
+	// Replace param([string]$GLVK) with setting variable directly
 	script := strings.Replace(scriptTemplate, "param([string]$GLVK)", fmt.Sprintf("$GLVK = '%s'", gvlk), 1)
 
 	// debug.Log("PowerShell script prepared, GVLK: %s", truncateGVLK(gvlk))
@@ -431,14 +431,14 @@ func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcente
 	// debug.Log("Program: %s", spec.ProgramPath)
 	// debug.Log("Working dir: %s", spec.WorkingDirectory)
 
-	// Använd den validerade authen (credentials redan validerade ovan)
+	// Use the validated auth (credentials already validated above)
 	pid, err := pm.StartProgram(ctx, auth, spec)
 	if err != nil {
 		debug.LogError("ProcessManager.StartProgram", err,
 			"ProgramPath", spec.ProgramPath,
 			"WorkingDir", spec.WorkingDirectory,
 		)
-		return 0, fmt.Errorf("kunde inte starta upgrade-script: %w", err)
+		return 0, fmt.Errorf("could not start upgrade script: %w", err)
 	}
 
 	// debug.Log("Program started successfully, PID: %d", pid)
@@ -452,7 +452,7 @@ func waitForProcessExit(ctx context.Context, vm *object.VirtualMachine, gc vcent
 	opsMgr := guest.NewOperationsManager(c, vm.Reference())
 	pm, err := opsMgr.ProcessManager(ctx)
 	if err != nil {
-		return -1, fmt.Errorf("kunde inte få ProcessManager: %w", err)
+		return -1, fmt.Errorf("could not get ProcessManager: %w", err)
 	}
 
 	auth := &types.NamePasswordAuthentication{Username: gc.User, Password: gc.Pass}
@@ -466,7 +466,7 @@ func waitForProcessExit(ctx context.Context, vm *object.VirtualMachine, gc vcent
 		case <-ctx.Done():
 			return -1, ctx.Err()
 		case <-ticker.C:
-			// ListProcesses returnerar lista med process-info
+			// ListProcesses returns list with process info
 			procs, err := pm.ListProcesses(ctx, auth, []int64{pid})
 			if err != nil {
 				debug.Log("[%s] WARNING: ListProcesses error: %v", serverName, err)
@@ -475,12 +475,12 @@ func waitForProcessExit(ctx context.Context, vm *object.VirtualMachine, gc vcent
 
 			if len(procs) == 0 {
 				debug.Log("[%s] Process not found in list - might have exited", serverName)
-				return 0, nil // Process finns inte = antagligen avslutad OK
+				return 0, nil // Process not found = probably completed OK
 			}
 
 			proc := procs[0]
 			if proc.EndTime != nil {
-				// Process har avslutat
+				// Process has completed
 				debug.Log("[%s] Process exited at %v with exit code %d", serverName, proc.EndTime, proc.ExitCode)
 				return proc.ExitCode, nil
 			}
@@ -550,16 +550,16 @@ func waitForTargetOS(ctx context.Context, vm *object.VirtualMachine, targets []s
 	}
 }
 
-// waitForPostRebootSignals verifierar att Windows är redo genom att leta efter signalfiler
-// - Scheduled task signal: skapas av en scheduled task vid startup
-// Detta är den mest tillförlitliga metoden för att veta att systemet är helt klart efter reboot
+// waitForPostRebootSignals verifies Windows is ready by looking for signal files
+// - Scheduled task signal: created by a scheduled task at startup
+// This is the most reliable method to know system is completely ready after reboot
 func waitForPostRebootSignals(ctx context.Context, vm *object.VirtualMachine, gc vcenter.GuestCreds, serverName string, timeouts config.TimeoutConfig) error {
 	c := vm.Client()
 	opsMgr := guest.NewOperationsManager(c, vm.Reference())
 
 	fm, err := opsMgr.FileManager(ctx)
 	if err != nil {
-		return fmt.Errorf("kunde inte få FileManager: %w", err)
+		return fmt.Errorf("could not get FileManager: %w", err)
 	}
 
 	auth := &types.NamePasswordAuthentication{Username: gc.User, Password: gc.Pass}
@@ -568,7 +568,7 @@ func waitForPostRebootSignals(ctx context.Context, vm *object.VirtualMachine, gc
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	// Timeout för underdimensionerade servrar
+	// Timeout for undersized servers
 	signalTimeout := time.Duration(timeouts.SignalFilesMinutes) * time.Minute
 	if signalTimeout <= 0 {
 		signalTimeout = 30 * time.Minute
@@ -585,10 +585,10 @@ func waitForPostRebootSignals(ctx context.Context, vm *object.VirtualMachine, gc
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-timeout:
-			// Vid timeout, returnera ett specifikt fel som kan hanteras annorlunda
-			return fmt.Errorf("LOGONUI_TIMEOUT: Task signal file hittades inte inom %v - servern bör kontrolleras manuellt (Task: %v)", signalTimeout, taskFileFound)
+			// On timeout, return a specific error that can be handled differently
+			return fmt.Errorf("LOGONUI_TIMEOUT: Task signal file not found within %v - server should be checked manually (Task: %v)", signalTimeout, taskFileFound)
 		case <-ticker.C:
-			// Kolla task signal file
+			// Check task signal file
 			if !taskFileFound {
 				_, err := fm.InitiateFileTransferFromGuest(ctx, auth, taskSignalFile)
 				if err == nil {
@@ -597,12 +597,12 @@ func waitForPostRebootSignals(ctx context.Context, vm *object.VirtualMachine, gc
 				}
 			}
 
-			// Om task-filen hittats, SUCCESS!
+			// If task file found, SUCCESS!
 			if taskFileFound {
 				debug.Log("[%s] SUCCESS! Task signal file detected - system is ready!", serverName)
 				debug.Log("[%s] Running cleanup script to remove signal file...", serverName)
 
-				// Kör cleanup.ps1 för att ta bort signalfilerna
+				// Run cleanup.ps1 to remove signal files
 				cleanupScript, cleanupCleanup, err := extractAndReadCleanupScript()
 				if err != nil {
 					debug.Log("WARNING: Could not extract cleanup script: %v", err)
@@ -628,7 +628,7 @@ func waitForPostRebootSignals(ctx context.Context, vm *object.VirtualMachine, gc
 				return nil
 			}
 
-			// Visa status
+			// Show status
 			if !taskFileFound {
 				debug.Log("[%s] Still waiting... (Task: %v)", serverName, taskFileFound)
 			}
@@ -655,29 +655,29 @@ func encodePowerShell(s string) string {
 	return base64.StdEncoding.EncodeToString(bytes)
 }
 
-// extractAndReadPowerShellScript extraherar PowerShell-scriptet från embedded FS
-// till användarens hemkatalog och läser in det som en string
+// extractAndReadPowerShellScript extracts PowerShell script from embedded FS
+// to user's home directory and reads it as a string
 func extractAndReadPowerShellScript() (string, func(), error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "", nil, fmt.Errorf("kunde inte hitta hemkatalog: %w", err)
+		return "", nil, fmt.Errorf("could not find home directory: %w", err)
 	}
 
 	// debug.Log("Extraherar PowerShell-script till %s...", homeDir)
 
-	// Extrahera filen till hemkatalogen
+	// Extract file to home directory
 	extractedPath, cleanup, err := efs.ExtractFile(assetsFS, "assets/uppgradeos.ps1", "osupgrader_", homeDir)
 	if err != nil {
-		return "", nil, fmt.Errorf("kunde inte extrahera PowerShell-script: %w", err)
+		return "", nil, fmt.Errorf("could not extract PowerShell script: %w", err)
 	}
 
 	// debug.Log("PowerShell-script extraherat till: %s", extractedPath)
 
-	// Läs in filen som string
+	// Read file as string
 	content, err := os.ReadFile(extractedPath)
 	if err != nil {
 		cleanup()
-		return "", nil, fmt.Errorf("kunde inte läsa PowerShell-script: %w", err)
+		return "", nil, fmt.Errorf("could not read PowerShell script: %w", err)
 	}
 
 	// debug.LogSuccess("ExtractPowerShellScript", "Path", extractedPath, "Size", len(content))
@@ -685,29 +685,29 @@ func extractAndReadPowerShellScript() (string, func(), error) {
 	return string(content), cleanup, nil
 }
 
-// extractAndReadCleanupScript extraherar cleanup PowerShell-scriptet från embedded FS
-// till användarens hemkatalog och läser in det som en string
+// extractAndReadCleanupScript extracts cleanup PowerShell script from embedded FS
+// to user's home directory and reads it as a string
 func extractAndReadCleanupScript() (string, func(), error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "", nil, fmt.Errorf("kunde inte hitta hemkatalog: %w", err)
+		return "", nil, fmt.Errorf("could not find home directory: %w", err)
 	}
 
 	// debug.Log("Extraherar cleanup-script till %s...", homeDir)
 
-	// Extrahera filen till hemkatalogen
+	// Extract file to home directory
 	extractedPath, cleanup, err := efs.ExtractFile(assetsFS, "assets/cleanup.ps1", "cleanup_", homeDir)
 	if err != nil {
-		return "", nil, fmt.Errorf("kunde inte extrahera cleanup-script: %w", err)
+		return "", nil, fmt.Errorf("could not extract cleanup script: %w", err)
 	}
 
 	// debug.Log("Cleanup-script extraherat till: %s", extractedPath)
 
-	// Läs in filen som string
+	// Read file as string
 	content, err := os.ReadFile(extractedPath)
 	if err != nil {
 		cleanup()
-		return "", nil, fmt.Errorf("kunde inte läsa cleanup-script: %w", err)
+		return "", nil, fmt.Errorf("could not read cleanup script: %w", err)
 	}
 
 	// debug.LogSuccess("ExtractCleanupScript", "Path", extractedPath, "Size", len(content))
@@ -715,22 +715,22 @@ func extractAndReadCleanupScript() (string, func(), error) {
 	return string(content), cleanup, nil
 }
 
-// uploadFileToGuest laddar upp en fil från embedded FS till gästen via VMware FileManager
+// uploadFileToGuest uploads a file from embedded FS to guest via VMware FileManager
 func uploadFileToGuest(ctx context.Context, vm *object.VirtualMachine, gc vcenter.GuestCreds, embeddedPath, guestPath, serverName string) error {
 	c := vm.Client()
 	opsMgr := guest.NewOperationsManager(c, vm.Reference())
 
-	// Hämta FileManager
+	// Get FileManager
 	fm, err := opsMgr.FileManager(ctx)
 	if err != nil {
-		return fmt.Errorf("kunde inte få FileManager: %w", err)
+		return fmt.Errorf("could not get FileManager: %w", err)
 	}
 
 	auth := &types.NamePasswordAuthentication{Username: gc.User, Password: gc.Pass}
 
 	debug.Log("[%s] Extraherar %s lokalt...", serverName, embeddedPath)
 
-	// Extrahera scriptet lokalt
+	// Extract script locally
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("kunde inte hitta hemkatalog: %w", err)
@@ -742,24 +742,24 @@ func uploadFileToGuest(ctx context.Context, vm *object.VirtualMachine, gc vcente
 	}
 	defer cleanup()
 
-	// Läs filinnehållet
+	// Read file contents
 	fileContent, err := os.ReadFile(extractedPath)
 	if err != nil {
-		return fmt.Errorf("kunde inte läsa fil: %w", err)
+		return fmt.Errorf("could not read file: %w", err)
 	}
 
 	debug.Log("[%s] Laddar upp till %s (%d bytes)...", serverName, guestPath, len(fileContent))
 
-	// Initiera filöverföring
+	// Initiate file transfer
 	fileTransferInfo, err := fm.InitiateFileTransferToGuest(ctx, auth, guestPath, &types.GuestFileAttributes{}, int64(len(fileContent)), true)
 	if err != nil {
-		return fmt.Errorf("kunde inte initiera filöverföring: %w", err)
+		return fmt.Errorf("could not initiate file transfer: %w", err)
 	}
 
-	// Ladda upp via HTTP PUT
+	// Upload via HTTP PUT
 	req, err := http.NewRequestWithContext(ctx, "PUT", fileTransferInfo, bytes.NewReader(fileContent))
 	if err != nil {
-		return fmt.Errorf("kunde inte skapa upload-request: %w", err)
+		return fmt.Errorf("could not create upload request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/octet-stream")
@@ -769,12 +769,12 @@ func uploadFileToGuest(ctx context.Context, vm *object.VirtualMachine, gc vcente
 	err = c.Client.Do(ctx, req, func(resp *http.Response) error {
 		if resp.StatusCode != 200 && resp.StatusCode != 201 {
 			body, _ := io.ReadAll(resp.Body)
-			uploadErr = fmt.Errorf("filuppladdning misslyckades med status %d: %s", resp.StatusCode, string(body))
+			uploadErr = fmt.Errorf("file upload failed with status %d: %s", resp.StatusCode, string(body))
 		}
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("kunde inte ladda upp fil: %w", err)
+		return fmt.Errorf("could not upload file: %w", err)
 	}
 	if uploadErr != nil {
 		return uploadErr
@@ -784,7 +784,7 @@ func uploadFileToGuest(ctx context.Context, vm *object.VirtualMachine, gc vcente
 	return nil
 }
 
-// uploadScriptsToGuest laddar upp alla PowerShell-scripts som behövs till gästen
+// uploadScriptsToGuest uploads all required PowerShell scripts to guest
 func uploadScriptsToGuest(ctx context.Context, vm *object.VirtualMachine, gc vcenter.GuestCreds, serverName string) error {
 	debug.Log("[%s] Uploading all required PowerShell scripts to guest...", serverName)
 
@@ -807,7 +807,7 @@ func uploadScriptsToGuest(ctx context.Context, vm *object.VirtualMachine, gc vce
 	return nil
 }
 
-// executeSignalTaskScript kör createsignaltasks.ps1 som redan finns på gästen
+// executeSignalTaskScript runs createsignaltasks.ps1 which already exists on guest
 func executeSignalTaskScript(ctx context.Context, vm *object.VirtualMachine, gc vcenter.GuestCreds, serverName string, timeouts config.TimeoutConfig) error {
 	c := vm.Client()
 	opsMgr := guest.NewOperationsManager(c, vm.Reference())
@@ -828,12 +828,12 @@ func executeSignalTaskScript(ctx context.Context, vm *object.VirtualMachine, gc 
 
 	pid, err := pm.StartProgram(ctx, auth, spec)
 	if err != nil {
-		return fmt.Errorf("kunde inte starta script: %w", err)
+		return fmt.Errorf("could not start script: %w", err)
 	}
 
 	debug.Log("[%s] Script startat, PID: %d", serverName, pid)
 
-	// Vänta på att scriptet avslutas
+	// Wait for script to complete
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
@@ -865,7 +865,7 @@ func executeSignalTaskScript(ctx context.Context, vm *object.VirtualMachine, gc 
 			proc := procs[0]
 			if proc.EndTime != nil {
 				if proc.ExitCode != 0 {
-					return fmt.Errorf("script avslutades med exit code %d", proc.ExitCode)
+					return fmt.Errorf("script completed with exit code %d", proc.ExitCode)
 				}
 				debug.LogSuccess("CreateSignalTaskScript", "Server", serverName, "PID", pid, "ExitCode", proc.ExitCode)
 				return nil

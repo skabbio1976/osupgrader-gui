@@ -1,5 +1,5 @@
-# Script för att skapa scheduled task som signalerar när systemet är redo
-# Använder schtasks.exe istället för PowerShell cmdlets för att undvika UAC/elevation-problem
+# Script to create scheduled task that signals when system is ready
+# Uses schtasks.exe instead of PowerShell cmdlets to avoid UAC/elevation issues
 
 $ErrorActionPreference = 'Stop'
 
@@ -9,16 +9,16 @@ if(!(test-path 'C:\Temp')){
 
 $TaskSignalFile = 'C:\Temp\osupgrader_ready.txt'
 
-# Ta bort gammal signal-fil om den finns
+# Remove old signal file if it exists
 if((test-path $TaskSignalFile)){
     Remove-Item -Path $TaskSignalFile -Force
 }
 
 try {
-    # === SCHEDULED TASK via schtasks.exe (fungerar utan UAC elevation) ===
+    # === SCHEDULED TASK via schtasks.exe (works without UAC elevation) ===
     Write-Output "Creating scheduled task XML..."
 
-    # Skapa task XML
+    # Create task XML
     $taskXml = @"
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
@@ -57,13 +57,13 @@ try {
 </Task>
 "@
 
-    # Spara XML till temp-fil
+    # Save XML to temp file
     $xmlPath = "C:\Temp\osupgrader_task.xml"
     $taskXml | Out-File -FilePath $xmlPath -Encoding unicode -Force
 
     Write-Output "Registering scheduled task with schtasks.exe..."
 
-    # Använd schtasks.exe för att skapa tasken (fungerar utan UAC)
+    # Use schtasks.exe to create task (works without UAC)
     $result = schtasks.exe /Create /TN "OSUpgraderSignal" /XML $xmlPath /F 2>&1
     $exitCode = $LASTEXITCODE
 
@@ -89,7 +89,7 @@ try {
         exit $LASTEXITCODE
     }
 
-    # Ta bort temp XML-fil
+    # Remove temp XML file
     if (Test-Path $xmlPath) {
         Remove-Item $xmlPath -Force
     }

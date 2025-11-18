@@ -34,6 +34,32 @@ conf.json
 
 # Log files
 *.log
+debuglogg.txt
+osupgrader.log
 
 # fyne-cross build artifacts
 fyne-cross/
+dist/
+build/
+
+# Compressed files
+*.zip
+*.tar.gz
+*.tgz
+
+# Backup files
+*.bak
+*.backup
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Test coverage
+coverage.html
+coverage.out
+
+# Development environment
+.env
+.env.local

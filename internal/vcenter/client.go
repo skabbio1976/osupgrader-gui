@@ -23,21 +23,21 @@ var (
 	cachedVim  *vim25.Client
 )
 
-// Client representerar en vCenter-klient
+// Client represents a vCenter client
 type Client struct {
 	vim *vim25.Client
 }
 
-// Login gör faktisk inloggning mot vCenter via govmomi
+// Login performs actual login to vCenter via govmomi
 func Login(cfg *config.VCenterConfig, password string) (*Client, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("config är nil")
+		return nil, fmt.Errorf("config is nil")
 	}
 	if cfg.Host == "" || cfg.Username == "" {
-		return nil, fmt.Errorf("host eller username saknas")
+		return nil, fmt.Errorf("host or username missing")
 	}
 
-	// Cache-check
+	// Cache check
 	clientMu.Lock()
 	if cachedVim != nil && cachedHost == cfg.Host && cachedUser == cfg.Username && cachedSess != "" {
 		vim := cachedVim
@@ -46,12 +46,12 @@ func Login(cfg *config.VCenterConfig, password string) (*Client, error) {
 	}
 	clientMu.Unlock()
 
-	// Bygg URL (lägg alltid till https:// och /sdk om det inte finns)
+	// Build URL (always add https:// and /sdk if not present)
 	raw := cfg.Host
 	if !(len(raw) >= 8 && (raw[:8] == "https://" || raw[:7] == "http://")) {
 		raw = "https://" + raw
 	}
-	// Ta bort eventuell avslutande slash
+	// Remove trailing slash if present
 	if raw[len(raw)-1] == '/' {
 		raw = raw[:len(raw)-1]
 	}
@@ -60,7 +60,7 @@ func Login(cfg *config.VCenterConfig, password string) (*Client, error) {
 	}
 	u, err := url.Parse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ogiltig URL: %w", err)
+		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
 	u.User = url.UserPassword(cfg.Username, password)
 
@@ -70,15 +70,15 @@ func Login(cfg *config.VCenterConfig, password string) (*Client, error) {
 
 	vimClient, err := vim25.NewClient(ctx, soapClient)
 	if err != nil {
-		return nil, fmt.Errorf("kunde inte skapa vim25 klient: %w", err)
+		return nil, fmt.Errorf("could not create vim25 client: %w", err)
 	}
 	sm := session.NewManager(vimClient)
 	if err := sm.Login(ctx, u.User); err != nil {
-		return nil, fmt.Errorf("inloggning misslyckades: %w", err)
+		return nil, fmt.Errorf("login failed: %w", err)
 	}
 	us, err := sm.UserSession(ctx)
 	if err != nil || us == nil {
-		return nil, fmt.Errorf("kunde inte hämta user session: %w", err)
+		return nil, fmt.Errorf("could not fetch user session: %w", err)
 	}
 
 	// Cache session
@@ -93,12 +93,12 @@ func Login(cfg *config.VCenterConfig, password string) (*Client, error) {
 	return &Client{vim: vimClient}, nil
 }
 
-// GetVim returnerar vim25-klienten
+// GetVim returns the vim25 client
 func (c *Client) GetVim() *vim25.Client {
 	return c.vim
 }
 
-// GetCachedClient returnerar den cachade klienten
+// GetCachedClient returns the cached client
 func GetCachedClient() *vim25.Client {
 	clientMu.Lock()
 	defer clientMu.Unlock()

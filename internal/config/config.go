@@ -7,17 +7,17 @@ import (
 	"path/filepath"
 )
 
-// VCenterConfig innehåller vCenter-anslutningsinformation
+// VCenterConfig contains vCenter connection information
 type VCenterConfig struct {
 	Host     string `json:"vcenter_url"`
 	Username string `json:"username"`
-	Password string `json:"-"` // Lagra aldrig lösenord i filen
+	Password string `json:"-"` // Never store password in file
 	Session  string `json:"-"`
-	Mode     string `json:"mode,omitempty"`     // "sspi" eller "password"
-	Insecure bool   `json:"insecure,omitempty"` // tillåt osignerade cert
+	Mode     string `json:"mode,omitempty"`     // "sspi" or "password"
+	Insecure bool   `json:"insecure,omitempty"` // allow unsigned certificates
 }
 
-// DefaultsConfig för sektionen "defaults"
+// DefaultsConfig for the "defaults" section
 type DefaultsConfig struct {
 	SnapshotNamePrefix   string `json:"snapshot_name_prefix"`
 	IsoDatastorePath     string `json:"iso_datastore_path"`
@@ -26,7 +26,7 @@ type DefaultsConfig struct {
 	GuestUsername        string `json:"guest_username,omitempty"`
 }
 
-// UpgradeConfig för sektionen "upgrade"
+// UpgradeConfig for the "upgrade" section
 type UpgradeConfig struct {
 	Parallel       int  `json:"parallel"`
 	Reboot         bool `json:"reboot"`
@@ -34,7 +34,7 @@ type UpgradeConfig struct {
 	PrecheckDiskGB int  `json:"precheck_disk_gb"`
 }
 
-// TimeoutConfig innehåller detaljerade timeout-inställningar
+// TimeoutConfig contains detailed timeout settings
 type TimeoutConfig struct {
 	SignalScriptSeconds int `json:"signal_script_seconds"`
 	SignalFilesMinutes  int `json:"signal_files_minutes"`
@@ -42,19 +42,19 @@ type TimeoutConfig struct {
 	PowerOffMinutes     int `json:"poweroff_minutes"`
 }
 
-// LoggingConfig för sektionen "logging"
+// LoggingConfig for the "logging" section
 type LoggingConfig struct {
 	Level string `json:"level"`
 	File  string `json:"file"`
 }
 
-// UIConfig för sektionen "ui"
+// UIConfig for the "ui" section
 type UIConfig struct {
 	Language string `json:"language"`
 	DarkMode bool   `json:"dark_mode"`
 }
 
-// AppConfig representerar konfigurationsfilens struktur
+// AppConfig represents the configuration file structure
 type AppConfig struct {
 	VCenter  VCenterConfig  `json:"vcenter"`
 	Defaults DefaultsConfig `json:"defaults"`
@@ -66,7 +66,7 @@ type AppConfig struct {
 
 const configFileName = "conf.json"
 
-// GetConfigPath returnerar sökvägen till konfigurationsfilen
+// GetConfigPath returns the path to the configuration file
 func GetConfigPath() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -75,7 +75,7 @@ func GetConfigPath() (string, error) {
 	return filepath.Join(homeDir, configFileName), nil
 }
 
-// Load läser in konfigurationen från fil
+// Load reads the configuration from file
 func Load() (*AppConfig, error) {
 	path, err := GetConfigPath()
 	if err != nil {
@@ -85,7 +85,7 @@ func Load() (*AppConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// Skapa defaultkonfiguration
+			// Create default configuration
 			cfg := createDefaultConfig()
 			if saveErr := Save(cfg); saveErr != nil {
 				return nil, fmt.Errorf("kunde inte skapa defaultkonfiguration: %w", saveErr)
@@ -105,7 +105,7 @@ func Load() (*AppConfig, error) {
 	return &cfg, nil
 }
 
-// Save sparar konfigurationen till fil
+// Save saves the configuration to file
 func Save(cfg *AppConfig) error {
 	path, err := GetConfigPath()
 	if err != nil {
@@ -124,7 +124,7 @@ func Save(cfg *AppConfig) error {
 	return nil
 }
 
-// createDefaultConfig skapar en standardkonfiguration
+// createDefaultConfig creates a default configuration
 func createDefaultConfig() *AppConfig {
 	return &AppConfig{
 		VCenter: VCenterConfig{
@@ -141,9 +141,9 @@ func createDefaultConfig() *AppConfig {
 			GuestUsername:        "Administrator",
 		},
 		Upgrade: UpgradeConfig{
-			Parallel:       10, // Antal parallella uppgraderingar
+			Parallel:       10, // Number of parallel upgrades
 			Reboot:         true,
-			TimeoutMinutes: 150, // Windows upgrade kan ta 60-90 min, + snapshot + reboot = 150 min total
+			TimeoutMinutes: 150, // Windows upgrade can take 60-90 min, + snapshot + reboot = 150 min total
 			PrecheckDiskGB: 10,
 		},
 		Timeouts: TimeoutConfig{
