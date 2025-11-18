@@ -56,20 +56,20 @@ type UpgradeStep struct {
 
 // UpgradeSingleVM upgrades a single VM
 func UpgradeSingleVM(vm *object.VirtualMachine, opts UpgradeOptions) error {
-	// debug.LogFunction("UpgradeSingleVM",
-	// 	"VM", opts.VMInfo.Name,
-	// 	"ISOPath", opts.ISOPath,
-	// 	"CreateSnapshot", opts.CreateSnapshot,
-	// 	"SnapshotName", opts.SnapshotName,
-	// 	"TimeoutMinutes", opts.Config.Upgrade.TimeoutMinutes,
-	// 	"PrecheckDiskGB", opts.Config.Upgrade.PrecheckDiskGB,
-	// )
+	debug.LogFunction("UpgradeSingleVM",
+		"VM", opts.VMInfo.Name,
+		"ISOPath", opts.ISOPath,
+		"CreateSnapshot", opts.CreateSnapshot,
+		"SnapshotName", opts.SnapshotName,
+		"TimeoutMinutes", opts.Config.Upgrade.TimeoutMinutes,
+		"PrecheckDiskGB", opts.Config.Upgrade.PrecheckDiskGB,
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(opts.Config.Upgrade.TimeoutMinutes)*time.Minute)
 	defer cancel()
 
 	// 0. Check if upgrade is already in progress
-	// debug.Log("Step 0: Checking if upgrade already in progress...")
+	debug.Log("Step 0: Checking if upgrade already in progress...")
 	inProgress, err := CheckUpgradeInProgress(ctx, vm)
 	if err != nil {
 		debug.LogError("CheckUpgradeInProgress", err, "VM", opts.VMInfo.Name)
@@ -79,56 +79,56 @@ func UpgradeSingleVM(vm *object.VirtualMachine, opts UpgradeOptions) error {
 		debug.LogError("UpgradeInProgress", fmt.Errorf("upgrade already in progress"), "VM", opts.VMInfo.Name)
 		return fmt.Errorf("upgrade verkar redan pågå på denna VM")
 	}
-	// debug.LogSuccess("CheckUpgradeInProgress", "VM", opts.VMInfo.Name)
+	debug.LogSuccess("CheckUpgradeInProgress", "VM", opts.VMInfo.Name)
 
 	// 1. Disk precheck
 	if opts.Config.Upgrade.PrecheckDiskGB > 0 {
-		// debug.Log("Step 1: Disk space precheck...")
+		debug.Log("Step 1: Disk space precheck...")
 		sysDrive, err := GetSystemDrive(ctx, vm)
 		if err != nil {
 			debug.LogError("GetSystemDrive", err, "VM", opts.VMInfo.Name)
 			return fmt.Errorf("kunde inte hitta system drive: %w", err)
 		}
-		// debug.Log("System drive detected: %s", sysDrive)
+		debug.Log("System drive detected: %s", sysDrive)
 
 		free, err := GetDiskFreeGB(ctx, vm, sysDrive)
 		if err != nil {
 			debug.LogError("GetDiskFreeGB", err, "VM", opts.VMInfo.Name, "Drive", sysDrive)
 			return fmt.Errorf("diskcheck: %w", err)
 		}
-		// debug.Log("Free space: %d GB (required: %d GB)", free, opts.Config.Upgrade.PrecheckDiskGB)
+		debug.Log("Free space: %d GB (required: %d GB)", free, opts.Config.Upgrade.PrecheckDiskGB)
 
 		if int(free) < opts.Config.Upgrade.PrecheckDiskGB {
 			debug.LogError("InsufficientDiskSpace", fmt.Errorf("not enough disk space"),
 				"VM", opts.VMInfo.Name, "Free", free, "Required", opts.Config.Upgrade.PrecheckDiskGB)
 			return fmt.Errorf("disk: %d GB ledigt < krav %d GB", free, opts.Config.Upgrade.PrecheckDiskGB)
 		}
-		// debug.LogSuccess("DiskPrecheck", "VM", opts.VMInfo.Name, "Free", free)
+		debug.LogSuccess("DiskPrecheck", "VM", opts.VMInfo.Name, "Free", free)
 	}
 
 	// 2. Snapshot
 	if opts.CreateSnapshot {
-		// debug.Log("Step 2: Creating snapshot...")
-		// debug.Log("Snapshot name: %s, Include memory: %v", opts.SnapshotName, !opts.Config.Defaults.SkipMemoryInSnapshot)
+		debug.Log("Step 2: Creating snapshot...")
+		debug.Log("Snapshot name: %s, Include memory: %v", opts.SnapshotName, !opts.Config.Defaults.SkipMemoryInSnapshot)
 
 		if err := vcenter.CreateSnapshot(ctx, vm, opts.SnapshotName, "Pre upgrade", !opts.Config.Defaults.SkipMemoryInSnapshot, false); err != nil {
 			debug.LogError("CreateSnapshot", err, "VM", opts.VMInfo.Name, "SnapshotName", opts.SnapshotName)
 			return fmt.Errorf("snapshot: %w", err)
 		}
-		// debug.LogSuccess("CreateSnapshot", "VM", opts.VMInfo.Name, "Name", opts.SnapshotName)
+		debug.LogSuccess("CreateSnapshot", "VM", opts.VMInfo.Name, "Name", opts.SnapshotName)
 	}
 
 	// 3. Mount ISO
-	// debug.Log("Step 3: Mounting ISO...")
-	// debug.Log("ISO path: %s", opts.ISOPath)
+	debug.Log("Step 3: Mounting ISO...")
+	debug.Log("ISO path: %s", opts.ISOPath)
 	if err := MountISO(ctx, vm, opts.ISOPath); err != nil {
 		debug.LogError("MountISO", err, "VM", opts.VMInfo.Name, "ISOPath", opts.ISOPath)
 		return fmt.Errorf("mount iso: %w", err)
 	}
-	// debug.LogSuccess("MountISO", "VM", opts.VMInfo.Name, "ISOPath", opts.ISOPath)
+	debug.LogSuccess("MountISO", "VM", opts.VMInfo.Name, "ISOPath", opts.ISOPath)
 
 	// 4. Prepare guest credentials and setup post-reboot signaling BEFORE upgrade
-	// debug.Log("Step 4: Preparing guest credentials and post-reboot signaling...")
+	debug.Log("Step 4: Preparing guest credentials and post-reboot signaling...")
 
 	// Build username - add domain if not already present
 	username := opts.GuestUsername
@@ -144,7 +144,7 @@ func UpgradeSingleVM(vm *object.VirtualMachine, opts UpgradeOptions) error {
 				}
 			}
 			username = username + "@" + domain
-			// debug.Log("Auto-appended domain to username: %s (extracted from FQDN: %s)", username, opts.VMInfo.Domain)
+			debug.Log("Auto-appended domain to username: %s (extracted from FQDN: %s)", username, opts.VMInfo.Domain)
 		}
 	}
 
@@ -348,7 +348,7 @@ waitForPowerOff:
 func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcenter.GuestCreds) (int64, error) {
 	c := vm.Client()
 
-	// debug.Log("Creating guest OperationsManager...")
+	debug.Log("Creating guest OperationsManager...")
 
 	// Create OperationsManager for guest operations
 	opsMgr := guest.NewOperationsManager(c, vm.Reference())
@@ -360,20 +360,20 @@ func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcente
 		return 0, fmt.Errorf("could not get ProcessManager: %w", err)
 	}
 
-	// debug.Log("ProcessManager created successfully")
+	debug.Log("ProcessManager created successfully")
 
 	// Validate credentials FIRST before trying to run anything
 	// This prevents account lockout from repeated failed attempts
 	auth := &types.NamePasswordAuthentication{Username: gc.User, Password: gc.Pass}
 
-	// debug.Log("=== AUTHENTICATION DEBUG ===")
-	// debug.Log("Username (raw): %s", gc.User)
-	// debug.Log("Password (raw): %s", gc.Pass) // Kommenterad av säkerhetsskäl
-	// debug.Log("Username length: %d chars", len(gc.User))
-	// debug.Log("Password length: %d chars", len(gc.Pass))
-	// debug.Log("Username contains backslash: %v", strings.Contains(gc.User, "\\"))
-	// debug.Log("Username contains @: %v", strings.Contains(gc.User, "@"))
-	// debug.Log("===========================")
+	debug.Log("=== AUTHENTICATION DEBUG ===")
+	debug.Log("Username (raw): %s", gc.User)
+	debug.Log("Password (raw): %s", gc.Pass) // Kommenterad av säkerhetsskäl
+	debug.Log("Username length: %d chars", len(gc.User))
+	debug.Log("Password length: %d chars", len(gc.Pass))
+	debug.Log("Username contains backslash: %v", strings.Contains(gc.User, "\\"))
+	debug.Log("Username contains @: %v", strings.Contains(gc.User, "@"))
+	debug.Log("===========================")
 
 	// Get AuthManager to validate credentials
 	am, err := opsMgr.AuthManager(ctx)
@@ -381,10 +381,6 @@ func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcente
 		debug.LogError("GetAuthManager", err)
 		return 0, fmt.Errorf("could not get AuthManager: %w", err)
 	}
-
-	// debug.Log("Calling ValidateCredentials with:")
-	// debug.Log("  auth.Username = %q", auth.Username)
-	// debug.Log("  auth.Password = %q", auth.Password) // Kommenterad av säkerhetsskäl
 
 	// Validate credentials before trying to start anything
 	err = am.ValidateCredentials(ctx, auth)
@@ -396,8 +392,8 @@ func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcente
 		return 0, fmt.Errorf("authentication failed for user '%s': %w", gc.User, err)
 	}
 
-	// debug.LogSuccess("ValidateCredentials", "Username", gc.User)
-	// debug.Log("Guest credentials validated successfully!")
+	debug.LogSuccess("ValidateCredentials", "Username", gc.User)
+	debug.Log("Guest credentials validated successfully!")
 
 	// Extract and read PowerShell script from embedded FS
 	script, cleanup, err := extractAndReadPowerShellScript()
@@ -407,11 +403,11 @@ func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcente
 	}
 	defer cleanup()
 
-	// debug.Log("PowerShell script prepared")
+	debug.Log("PowerShell script prepared")
 
 	encoded := encodePowerShell(script)
 
-	// debug.Log("PowerShell script encoded, length: %d bytes", len(encoded))
+	debug.Log("PowerShell script encoded, length: %d bytes", len(encoded))
 
 	spec := &types.GuestProgramSpec{
 		ProgramPath:      "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
@@ -419,9 +415,9 @@ func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcente
 		WorkingDirectory: "C:\\Windows\\Temp",
 	}
 
-	// debug.Log("Starting program in guest...")
-	// debug.Log("Program: %s", spec.ProgramPath)
-	// debug.Log("Working dir: %s", spec.WorkingDirectory)
+	debug.Log("Starting program in guest...")
+	debug.Log("Program: %s", spec.ProgramPath)
+	debug.Log("Working dir: %s", spec.WorkingDirectory)
 
 	// Use the validated auth (credentials already validated above)
 	pid, err := pm.StartProgram(ctx, auth, spec)
@@ -433,8 +429,8 @@ func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcente
 		return 0, fmt.Errorf("could not start upgrade script: %w", err)
 	}
 
-	// debug.Log("Program started successfully, PID: %d", pid)
-	// debug.LogSuccess("StartProgram", "PID", pid)
+	debug.Log("Program started successfully, PID: %d", pid)
+	debug.LogSuccess("StartProgram", "PID", pid)
 
 	return pid, nil
 }
@@ -655,7 +651,7 @@ func extractAndReadPowerShellScript() (string, func(), error) {
 		return "", nil, fmt.Errorf("could not find home directory: %w", err)
 	}
 
-	// debug.Log("Extraherar PowerShell-script till %s...", homeDir)
+	debug.Log("Extrating PowerShell-script to %s...", homeDir)
 
 	// Extract file to home directory
 	extractedPath, cleanup, err := efs.ExtractFile(assetsFS, "assets/upgradeos.ps1", "osupgrader_", homeDir)
@@ -663,7 +659,7 @@ func extractAndReadPowerShellScript() (string, func(), error) {
 		return "", nil, fmt.Errorf("could not extract PowerShell script: %w", err)
 	}
 
-	// debug.Log("PowerShell-script extraherat till: %s", extractedPath)
+	debug.Log("PowerShell-script extraherat till: %s", extractedPath)
 
 	// Read file as string
 	content, err := os.ReadFile(extractedPath)
@@ -672,7 +668,7 @@ func extractAndReadPowerShellScript() (string, func(), error) {
 		return "", nil, fmt.Errorf("could not read PowerShell script: %w", err)
 	}
 
-	// debug.LogSuccess("ExtractPowerShellScript", "Path", extractedPath, "Size", len(content))
+	debug.LogSuccess("ExtractPowerShellScript", "Path", extractedPath, "Size", len(content))
 
 	return string(content), cleanup, nil
 }
@@ -685,7 +681,7 @@ func extractAndReadCleanupScript() (string, func(), error) {
 		return "", nil, fmt.Errorf("could not find home directory: %w", err)
 	}
 
-	// debug.Log("Extraherar cleanup-script till %s...", homeDir)
+	debug.Log("Extracting cleanup-script to %s...", homeDir)
 
 	// Extract file to home directory
 	extractedPath, cleanup, err := efs.ExtractFile(assetsFS, "assets/cleanup.ps1", "cleanup_", homeDir)
@@ -693,7 +689,7 @@ func extractAndReadCleanupScript() (string, func(), error) {
 		return "", nil, fmt.Errorf("could not extract cleanup script: %w", err)
 	}
 
-	// debug.Log("Cleanup-script extraherat till: %s", extractedPath)
+	debug.Log("Cleanup-script extraced to: %s", extractedPath)
 
 	// Read file as string
 	content, err := os.ReadFile(extractedPath)
@@ -702,7 +698,7 @@ func extractAndReadCleanupScript() (string, func(), error) {
 		return "", nil, fmt.Errorf("could not read cleanup script: %w", err)
 	}
 
-	// debug.LogSuccess("ExtractCleanupScript", "Path", extractedPath, "Size", len(content))
+	debug.LogSuccess("ExtractCleanupScript", "Path", extractedPath, "Size", len(content))
 
 	return string(content), cleanup, nil
 }
@@ -720,17 +716,17 @@ func uploadFileToGuest(ctx context.Context, vm *object.VirtualMachine, gc vcente
 
 	auth := &types.NamePasswordAuthentication{Username: gc.User, Password: gc.Pass}
 
-	debug.Log("[%s] Extraherar %s lokalt...", serverName, embeddedPath)
+	debug.Log("[%s] Extracting %s locally...", serverName, embeddedPath)
 
 	// Extract script locally
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("kunde inte hitta hemkatalog: %w", err)
+		return fmt.Errorf("could not find home directory: %w", err)
 	}
 
 	extractedPath, cleanup, err := efs.ExtractFile(assetsFS, embeddedPath, "temp_", homeDir)
 	if err != nil {
-		return fmt.Errorf("kunde inte extrahera %s: %w", embeddedPath, err)
+		return fmt.Errorf("could not extract %s: %w", embeddedPath, err)
 	}
 	defer cleanup()
 
@@ -740,7 +736,7 @@ func uploadFileToGuest(ctx context.Context, vm *object.VirtualMachine, gc vcente
 		return fmt.Errorf("could not read file: %w", err)
 	}
 
-	debug.Log("[%s] Laddar upp till %s (%d bytes)...", serverName, guestPath, len(fileContent))
+	debug.Log("[%s] Uploading to %s (%d bytes)...", serverName, guestPath, len(fileContent))
 
 	// Initiate file transfer
 	fileTransferInfo, err := fm.InitiateFileTransferToGuest(ctx, auth, guestPath, &types.GuestFileAttributes{}, int64(len(fileContent)), true)
@@ -785,7 +781,7 @@ func uploadScriptsToGuest(ctx context.Context, vm *object.VirtualMachine, gc vce
 		guest    string
 	}{
 		{"assets/createsignaltasks.ps1", "C:\\Temp\\createsignaltasks.ps1"},
-		{"assets/processmonitor.ps1", "C:\\Temp\\processmonitor.ps1"},
+		//{"assets/processmonitor.ps1", "C:\\Temp\\processmonitor.ps1"},
 		// {"assets/cleanup.ps1", "C:\\Temp\\cleanup.ps1"},
 	}
 
@@ -810,7 +806,7 @@ func executeSignalTaskScript(ctx context.Context, vm *object.VirtualMachine, gc 
 
 	pm, err := opsMgr.ProcessManager(ctx)
 	if err != nil {
-		return fmt.Errorf("kunde inte få ProcessManager: %w", err)
+		return fmt.Errorf("could not get ProcessManager: %w", err)
 	}
 
 	spec := &types.GuestProgramSpec{
