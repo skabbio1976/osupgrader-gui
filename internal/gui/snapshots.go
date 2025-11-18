@@ -211,6 +211,8 @@ func (a *App) showSnapshotManagementScreen() {
 
 	// Ta bort valda-knapp
 	removeBtn = widget.NewButton(a.tr.RemoveSelected, func() {
+		debug.Log("Remove button clicked")
+
 		// Räkna valda
 		count := 0
 		for _, checked := range selectedSnapshots {
@@ -218,6 +220,7 @@ func (a *App) showSnapshotManagementScreen() {
 				count++
 			}
 		}
+		debug.Log("Selected snapshots count: %d", count)
 
 		if count == 0 {
 			dialog.ShowInformation(a.tr.NoSnapshotsSelected, a.tr.SelectSnapshotsFirst, a.window)
@@ -225,6 +228,7 @@ func (a *App) showSnapshotManagementScreen() {
 		}
 
 		// Bekräftelse
+		debug.Log("Showing confirmation dialog for %d snapshots", count)
 		confirmMsg := widget.NewLabel(fmt.Sprintf(a.tr.RemoveConfirmMessage, count))
 		confirmMsg.Wrapping = fyne.TextWrapWord
 		// Wrap in container with minimum width to make dialog wider
@@ -238,12 +242,25 @@ func (a *App) showSnapshotManagementScreen() {
 			a.tr.ConfirmNo, a.tr.ConfirmYes,
 			confirmContent,
 			func(confirmed bool) {
+				debug.Log("Dialog callback triggered with confirmed=%v", confirmed)
+
 				if !confirmed {
+					debug.Log("User clicked 'Nej' (dismiss), aborting")
 					return
 				}
 
+				debug.Log("User clicked 'Ja' (confirm), checking client...")
+				// Check client before starting removal
+				client := a.GetClient()
+				if client == nil {
+					debug.LogError("GetClient", fmt.Errorf("no active client"), "")
+					dialog.ShowError(fmt.Errorf("ingen aktiv vCenter-anslutning"), a.window)
+					return
+				}
+
+				debug.Log("Client OK, starting removal goroutine...")
 				// Ta bort snapshots
-				go a.removeSelectedSnapshots(filteredSnapshots, selectedSnapshots, statusLabel, selectAllBtn, deselectAllBtn, removeBtn)
+				go a.removeSelectedSnapshots(client, filteredSnapshots, selectedSnapshots, statusLabel, selectAllBtn, deselectAllBtn, removeBtn)
 			}, a.window)
 	})
 	removeBtn.Disable()
@@ -343,7 +360,7 @@ func (a *App) loadSnapshots(statusLabel *widget.Label, progress *widget.Progress
 	updateFilteredList("")
 }
 
-func (a *App) removeSelectedSnapshots(snapshots []SnapshotInfo, selected map[string]bool,
+func (a *App) removeSelectedSnapshots(client *vcenter.Client, snapshots []SnapshotInfo, selected map[string]bool,
 	statusLabel *widget.Label, selectAllBtn, deselectAllBtn, removeBtn *widget.Button) {
 
 	debug.Log("Starting snapshot removal process...")
@@ -366,17 +383,6 @@ func (a *App) removeSelectedSnapshots(snapshots []SnapshotInfo, selected map[str
 
 	statusLabel.SetText(fmt.Sprintf(a.tr.RemovingSnapshots, len(toRemove)))
 	debug.Log("Starting parallel removal of %d snapshots", len(toRemove))
-
-	// Get client
-	client := a.GetClient()
-	if client == nil {
-		debug.LogError("RemoveSnapshot", fmt.Errorf("no active client"), "")
-		statusLabel.SetText("Error: No active vCenter connection")
-		removeBtn.Enable()
-		selectAllBtn.Enable()
-		deselectAllBtn.Enable()
-		return
-	}
 
 	// Starta parallella goroutines för varje snapshot
 	for _, snap := range toRemove {
