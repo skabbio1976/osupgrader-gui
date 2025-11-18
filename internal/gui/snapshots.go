@@ -367,6 +367,17 @@ func (a *App) removeSelectedSnapshots(snapshots []SnapshotInfo, selected map[str
 	statusLabel.SetText(fmt.Sprintf(a.tr.RemovingSnapshots, len(toRemove)))
 	debug.Log("Starting parallel removal of %d snapshots", len(toRemove))
 
+	// Get client
+	client := a.GetClient()
+	if client == nil {
+		debug.LogError("RemoveSnapshot", fmt.Errorf("no active client"), "")
+		statusLabel.SetText("Error: No active vCenter connection")
+		removeBtn.Enable()
+		selectAllBtn.Enable()
+		deselectAllBtn.Enable()
+		return
+	}
+
 	// Starta parallella goroutines för varje snapshot
 	for _, snap := range toRemove {
 		wg.Add(1)
@@ -375,7 +386,7 @@ func (a *App) removeSelectedSnapshots(snapshots []SnapshotInfo, selected map[str
 
 			debug.Log("Removing snapshot: %s on VM %s", s.SnapshotName, s.VMName)
 
-			if err := vcenter.RemoveSnapshot(ctx, s.SnapRef.Ref); err != nil {
+			if err := vcenter.RemoveSnapshot(ctx, client.GetVim(), s.SnapRef.Ref); err != nil {
 				debug.LogError("RemoveSnapshot", err, "VM", s.VMName, "Snapshot", s.SnapshotName)
 				failed.Add(1)
 			} else {

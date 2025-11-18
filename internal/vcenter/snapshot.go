@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
@@ -58,8 +59,7 @@ func ListSnapshots(ctx context.Context, vm *object.VirtualMachine, vmName string
 }
 
 // RemoveSnapshot removes a snapshot
-func RemoveSnapshot(ctx context.Context, snapRef types.ManagedObjectReference) error {
-	c := GetCachedClient()
+func RemoveSnapshot(ctx context.Context, c *vim25.Client, snapRef types.ManagedObjectReference) error {
 	if c == nil {
 		return errors.New("no active client")
 	}
