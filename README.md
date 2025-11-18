@@ -1,6 +1,7 @@
 # OSUpgrader GUI
 
-An automated tool for upgrading Windows Server 2016/2019 to Windows Server 2022/2025 Datacenter via VMware vCenter/vSphere.
+An automated tool for upgrading Windows Server 2016/2019 to Windows Server 2022/2025 (Standard/Datacenter edition) via VMware vCenter/vSphere.  
+
 
 **[🇸🇪 Swedish version / Svensk version](README-SWE.md)**
 
@@ -12,6 +13,7 @@ OSUpgrader GUI is a Fyne-based graphical application that makes it easy to upgra
 
 - **Graphical user interface** with Fyne framework
   - Automatic DPI scaling for optimal display on all screens
+  - Bilingual support: Swedish and English interface
 - **vCenter login** with support for:
   - Password authentication (all platforms)
   - Windows SSPI/Kerberos single sign-on (Windows only) ✓ Tested and verified
@@ -43,7 +45,7 @@ OSUpgrader GUI is a Fyne-based graphical application that makes it easy to upgra
 - Go 1.24 or later
 - Linux/Windows/macOS
 - Access to VMware vCenter
-- Windows Server 2022/2025 Datacenter ISO on datastore
+- Windows Server 2022/2025 ISO on datastore (Standard or Datacenter edition)
 
 ## Installation
 
@@ -437,9 +439,9 @@ Special thanks to:
 ## Roadmap
 
 Planned features and improvements:
-- [ ] English language UI (i18n support)
-- [ ] Support for Windows Server Standard edition
 - [x] Support for Windows Server 2025
+- [x] Bilingual UI (Swedish and English)
+- [x] Support for Windows Server Standard edition
 - [ ] Automated rollback on failure
 - [ ] Enhanced pre-flight checks
 - [ ] Upgrade history database
