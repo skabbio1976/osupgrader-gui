@@ -2,15 +2,13 @@
 
 An automated tool for upgrading Windows Server 2016/2019 to Windows Server 2022 Datacenter via VMware vCenter/vSphere.
 
-> **Origin Story**: This tool was created to help IT operations teams facing the challenge of upgrading 1000+ Windows Servers before year-end. What started as an internal solution became popular among other teams facing the same problem. Now it's an open-source contribution to help operations teams worldwide! 🚀
-
 ## Overview
 
 OSUpgrader GUI is a Fyne-based graphical application that makes it easy to upgrade multiple Windows Server VMs simultaneously through an intuitive user interface.
 
 ## Funktioner
 
-- **Grafiskt gränssnitt** med Fyne-ramverket
+- **Grafiskt gränssnitt** med Fye-ramverket
   - Automatisk DPI-skalning för optimal visning på alla skärmar
 - **vCenter-inloggning** med stöd för:
   - Lösenordsautentisering (alla plattformar)
