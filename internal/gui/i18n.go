@@ -70,6 +70,14 @@ type Translations struct {
 	ISOValidated            string
 	StartingUpgrade         string // "Starting upgrade of %d servers..."
 	UpgradeCompleted        string // "✓ DONE (%s) - Upgrade completed!"
+	UpgradeFailed           string // "❌ FAILED (%s): %v"
+	VMCompleteStatus        string // "VM %d/%d complete (%s failed) - %d succeeded, %d failed"
+	VMSuccessStatus         string // "VM %d/%d complete (%s succeeded) - %d succeeded, %d failed total"
+	AllCompleteStatus       string // "✓ All complete! %d/%d succeeded, %d failed"
+	SummaryHeader           string // "=== SUMMARY ==="
+	SummaryTotal            string // "Total: %d VMs"
+	SummarySucceeded        string // "Succeeded: %d"
+	SummaryFailed           string // "Failed: %d"
 	AllSuccessful           string
 	SomeFailed              string
 
@@ -92,6 +100,8 @@ type Translations struct {
 	RemoveErrorCount        string // "⚠ Done with errors: %d removed, %d failed"
 	RemoveSuccess           string
 	RemoveError             string
+	ConfirmYes              string
+	ConfirmNo               string
 
 	// Settings dialog
 	SettingsTitle           string
@@ -193,6 +203,14 @@ var englishTranslations = Translations{
 	ISOValidated:            "ISO validated",
 	StartingUpgrade:         "Starting upgrade of %d servers...\n\n",
 	UpgradeCompleted:        "✓ DONE (%s) - Upgrade completed!",
+	UpgradeFailed:           "❌ FAILED (%s): %v",
+	VMCompleteStatus:        "VM %d/%d complete (%s failed) - %d succeeded, %d failed",
+	VMSuccessStatus:         "VM %d/%d complete (%s succeeded) - %d succeeded, %d failed total",
+	AllCompleteStatus:       "✓ All complete! %d/%d succeeded, %d failed",
+	SummaryHeader:           "=== SUMMARY ===",
+	SummaryTotal:            "Total: %d VMs",
+	SummarySucceeded:        "Succeeded: %d",
+	SummaryFailed:           "Failed: %d",
 	AllSuccessful:           "Status: All upgrades completed successfully!",
 	SomeFailed:              "Status: Some upgrades failed, see log above for details",
 
@@ -215,6 +233,8 @@ var englishTranslations = Translations{
 	RemoveErrorCount:        "⚠ Done with errors: %d removed, %d failed",
 	RemoveSuccess:           "Snapshots Removed",
 	RemoveError:             "Error removing snapshots",
+	ConfirmYes:              "Yes",
+	ConfirmNo:               "No",
 
 	// Settings dialog
 	SettingsTitle:           "Settings",
@@ -316,6 +336,14 @@ var swedishTranslations = Translations{
 	ISOValidated:            "ISO validerad",
 	StartingUpgrade:         "Startar uppgradering av %d servrar...\n\n",
 	UpgradeCompleted:        "✓ KLAR (%s) - Uppgradering slutförd!",
+	UpgradeFailed:           "❌ MISSLYCKADES (%s): %v",
+	VMCompleteStatus:        "VM %d/%d klar (%s misslyckades) - %d lyckades, %d misslyckades",
+	VMSuccessStatus:         "VM %d/%d klar (%s lyckades) - %d lyckades, %d misslyckades totalt",
+	AllCompleteStatus:       "✓ Alla klara! %d/%d lyckades, %d misslyckades",
+	SummaryHeader:           "=== SAMMANFATTNING ===",
+	SummaryTotal:            "Totalt: %d VMs",
+	SummarySucceeded:        "Lyckades: %d",
+	SummaryFailed:           "Misslyckades: %d",
 	AllSuccessful:           "Status: Alla uppgraderingar slutförda utan fel!",
 	SomeFailed:              "Status: Vissa uppgraderingar misslyckades, se logg ovan för detaljer",
 
@@ -338,6 +366,8 @@ var swedishTranslations = Translations{
 	RemoveErrorCount:        "⚠ Klart med fel: %d borttagna, %d misslyckades",
 	RemoveSuccess:           "Snapshots borttagna",
 	RemoveError:             "Fel vid borttagning av snapshots",
+	ConfirmYes:              "Ja",
+	ConfirmNo:               "Nej",
 
 	// Settings dialog
 	SettingsTitle:           "Inställningar",

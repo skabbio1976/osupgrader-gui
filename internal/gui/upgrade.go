@@ -232,12 +232,12 @@ func (a *App) showUpgradeScreen(selectedVMs map[string]bool) {
 				completed++
 				if result.err != nil {
 					failures++
-					logText.SetText(logText.Text + fmt.Sprintf("[%s] ❌ MISSLYCKADES (%s): %v\n", time.Now().Format("15:04:05"), result.vmName, result.err))
-					statusLabel.SetText(fmt.Sprintf("VM %d/%d klar (%s misslyckades) - %d lyckades, %d misslyckades",
+					logText.SetText(logText.Text + fmt.Sprintf("[%s] "+a.tr.UpgradeFailed+"\n", time.Now().Format("15:04:05"), result.vmName, result.err))
+					statusLabel.SetText(fmt.Sprintf(a.tr.VMCompleteStatus,
 						completed, len(selectedNames), result.vmName, completed-failures, failures))
 				} else {
 					logText.SetText(logText.Text + fmt.Sprintf("[%s] "+a.tr.UpgradeCompleted+"\n", time.Now().Format("15:04:05"), result.vmName))
-					statusLabel.SetText(fmt.Sprintf("VM %d/%d klar (%s lyckades) - %d lyckades, %d misslyckades totalt",
+					statusLabel.SetText(fmt.Sprintf(a.tr.VMSuccessStatus,
 						completed, len(selectedNames), result.vmName, completed-failures, failures))
 				}
 
@@ -247,11 +247,11 @@ func (a *App) showUpgradeScreen(selectedVMs map[string]bool) {
 			}
 
 			// Klart - ingen popup, bara status och logg
-			statusLabel.SetText(fmt.Sprintf("✓ Alla klara! %d/%d lyckades, %d misslyckades", completed-failures, len(selectedNames), failures))
-			logText.SetText(logText.Text + fmt.Sprintf("\n[%s] === SAMMANFATTNING ===\n", time.Now().Format("15:04:05")))
-			logText.SetText(logText.Text + fmt.Sprintf("[%s] Totalt: %d VMs\n", time.Now().Format("15:04:05"), len(selectedNames)))
-			logText.SetText(logText.Text + fmt.Sprintf("[%s] Lyckades: %d\n", time.Now().Format("15:04:05"), completed-failures))
-			logText.SetText(logText.Text + fmt.Sprintf("[%s] Misslyckades: %d\n", time.Now().Format("15:04:05"), failures))
+			statusLabel.SetText(fmt.Sprintf(a.tr.AllCompleteStatus, completed-failures, len(selectedNames), failures))
+			logText.SetText(logText.Text + fmt.Sprintf("\n[%s] %s\n", time.Now().Format("15:04:05"), a.tr.SummaryHeader))
+			logText.SetText(logText.Text + fmt.Sprintf("[%s] "+a.tr.SummaryTotal+"\n", time.Now().Format("15:04:05"), len(selectedNames)))
+			logText.SetText(logText.Text + fmt.Sprintf("[%s] "+a.tr.SummarySucceeded+"\n", time.Now().Format("15:04:05"), completed-failures))
+			logText.SetText(logText.Text + fmt.Sprintf("[%s] "+a.tr.SummaryFailed+"\n", time.Now().Format("15:04:05"), failures))
 			if failures == 0 {
 				logText.SetText(logText.Text + fmt.Sprintf("[%s] %s\n", time.Now().Format("15:04:05"), a.tr.AllSuccessful))
 			} else {

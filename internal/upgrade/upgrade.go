@@ -189,7 +189,7 @@ func UpgradeSingleVM(vm *object.VirtualMachine, opts UpgradeOptions) error {
 	}
 	if exitCode != 0 {
 		debug.LogError("ScriptExitCode", fmt.Errorf("non-zero exit code"), "VM", opts.VMInfo.Name, "ExitCode", exitCode)
-		return fmt.Errorf("upgrade script failed med exit code %d", exitCode)
+		return fmt.Errorf("upgrade script failed with exit code %d", exitCode)
 	}
 	debug.LogSuccess("ScriptCompleted", "VM", opts.VMInfo.Name, "ExitCode", exitCode)
 
@@ -368,7 +368,7 @@ func startGuestUpgrade(ctx context.Context, vm *object.VirtualMachine, gc vcente
 
 	debug.Log("=== AUTHENTICATION DEBUG ===")
 	debug.Log("Username (raw): %s", gc.User)
-	debug.Log("Password (raw): %s", gc.Pass) // Kommenterad av säkerhetsskäl
+	//debug.Log("Password (raw): %s", gc.Pass) // Kommenterad av säkerhetsskäl
 	debug.Log("Username length: %d chars", len(gc.User))
 	debug.Log("Password length: %d chars", len(gc.Pass))
 	debug.Log("Username contains backslash: %v", strings.Contains(gc.User, "\\"))

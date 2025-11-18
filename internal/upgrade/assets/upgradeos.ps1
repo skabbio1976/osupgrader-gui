@@ -5,45 +5,61 @@ function Write-Log {
     Write-Output $Message
 }
 
+function Set-ServerEditionAndImageIndex {
+    $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+    $installationType = (Get-ItemProperty -Path $regPath).InstallationType
+    $edition = Get-ServerEdition
+    switch ($Edition) {
+        'Datacenter' {
+            $glvk = 'WX4NM-KYWYW-QJJR4-XV3QB-6VM33'
+            if($installationType -eq 'Server') {
+                $imageIndex = 4
+            } else {
+                $imageIndex = 3
+            }
+        }
+        'Standard' {
+            $glvk = 'VDYBN-27WPP-V4HQT-9VMD4-VMK7H'
+            if($installationType -eq 'Server') {
+                $imageIndex = 2
+            } else {
+                $imageIndex = 1
+            }
+        }
+    }
+    return $glvk,$imageIndex,$edition
+}
+
+function Get-ServerEdition{
+    $os = Get-CimInstance -ClassName Win32_OperatingSystem
+    $sku = $os.OperatingSystemSKU
+    
+    #Write-Log 'Detecting current installation type...'
+    switch ($sku) {
+        8 { 
+            return 'Datacenter'
+        } # Datacenter
+        7 { 
+            return 'Standard'
+        } # Standard
+    }
+}
+
 if(!(test-path 'C:\Temp')){
     New-Item -ItemType Directory -Path "C:\Temp" -Force
 }
 $ErrorActionPreference = 'Stop'
 $LogFile = 'C:\Temp\upgrade.log'
 try {
-    $os = Get-WmiObject -Class Win32_OperatingSystem
-    $sku = $os.OperatingSystemSKU
-    
-    Write-Log 'Detecting current installation type...'
-    switch ($sku) {
-        8  { 
-            $imageIndex = 4
-            $GLVK = 'WX4NM-KYWYW-QJJR4-XV3QB-6VM33'
-            $edition = 'Datacenter Desktop'
-        } # Datacenter Desktop
-        7  { 
-            $imageIndex = 2 
-            $GLVK = 'VDYBN-27WPP-V4HQT-9VMD4-VMK7H'
-            $edition = 'Standard Desktop'
-        } # Standard Desktop
-        48 { 
-            $imageindex = 3
-            $GLVK = 'WX4NM-KYWYW-QJJR4-XV3QB-6VM33'
-            $edition = 'Datacenter Core'
-        }   # Datacenter Core
-        49 { 
-            $imageindex = 1
-            $GLVK = 'VDYBN-27WPP-V4HQT-9VMD4-VMK7H' 
-            $edition = 'Standard Core'
-        } # Standard Core
-        default { exit 1 }
-    }
-
+    $glvk = (Set-ServerEditionAndImageIndex)[0]
+    $imageIndex =  (Set-ServerEditionAndImageIndex)[1]
+    $edition =  (Set-ServerEditionAndImageIndex)[2]
     Write-Log '=== Upgrade Start ==='
     Write-Log "Edition: $edition"
     Write-Log "GLVK: $GLVK"
     Write-Log "Image Index: $imageIndex"
 
+    
     # --- Locate installation media ---
     Write-Log 'Locating installation media (CD/DVD with install.wim)...'
     $cdDrive = Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DriveType -eq 5 } | Select-Object -First 1
@@ -54,11 +70,10 @@ try {
     if (-not (Test-Path $wimPath)) { throw "install.wim hittades inte på $media" }
     if (-not (Test-Path $setupPath)) { throw "setup.exe saknas på $media" }
     Write-Log "Media OK: $media"
-
+    
 
     # --- Build arguments ---
-    Write-Log 'Product key: $GLVK'
-	$setupArgs = @('/auto','upgrade','/noreboot','/dynamicupdate','disable','/showoobe','none','/telemetry','disable','/Compat','IgnoreWarning','/eula','accept')
+    $setupArgs = @('/auto','upgrade','/noreboot','/dynamicupdate','disable','/showoobe','none','/telemetry','disable','/Compat','IgnoreWarning','/eula','accept')
 	$setupArgs += @('/imageindex',$imageIndex)
 	$setupArgs += @('/pkey',$GLVK)
 	Write-Log ("Command: $setupPath " + ($setupArgs -join ' '))

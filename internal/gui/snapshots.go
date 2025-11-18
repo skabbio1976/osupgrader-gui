@@ -225,8 +225,18 @@ func (a *App) showSnapshotManagementScreen() {
 		}
 
 		// Bekräftelse
-		dialog.ShowConfirm(a.tr.RemoveConfirmTitle,
-			fmt.Sprintf(a.tr.RemoveConfirmMessage, count),
+		confirmMsg := widget.NewLabel(fmt.Sprintf(a.tr.RemoveConfirmMessage, count))
+		confirmMsg.Wrapping = fyne.TextWrapWord
+		// Wrap in container with minimum width to make dialog wider
+		confirmContent := container.NewPadded(
+			container.NewStack(
+				container.NewMax(confirmMsg),
+			),
+		)
+		confirmContent.Resize(fyne.NewSize(400, 0)) // Minimum width
+		dialog.ShowCustomConfirm(a.tr.RemoveConfirmTitle,
+			a.tr.ConfirmNo, a.tr.ConfirmYes,
+			confirmContent,
 			func(confirmed bool) {
 				if !confirmed {
 					return
