@@ -421,21 +421,6 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on:
 - Code style guidelines
 - Pull request process
 
-## Community & Support
-
-- **Bug Reports & Feature Requests**: Open an issue on GitHub using our [issue templates](.github/ISSUE_TEMPLATE/)
-- **Questions**: Use GitHub Discussions or open an issue with the `question` label
-- **Security Issues**: Please report privately to maintainers - see [SECURITY.md](SECURITY.md)
-- **Contributing**: Read our [Contributing Guidelines](CONTRIBUTING.md)
-- **Code of Conduct**: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-
-## Acknowledgments
-
-Special thanks to:
-- All the IT operations teams who provided feedback and use cases
-- Contributors who help improve this tool
-- The teams facing tight upgrade deadlines that inspired this project
-
 ## Roadmap
 
 Planned features and improvements:
