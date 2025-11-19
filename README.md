@@ -434,6 +434,11 @@ Planned features and improvements:
 
 Want to contribute to any of these? Check out [CONTRIBUTING.md](CONTRIBUTING.md)!
 
+## Acknowledgments
+
+Special thanks to:
+- **[alexbrainman](https://github.com/alexbrainman)** for the excellent [sspi](https://github.com/alexbrainman/sspi) package, which makes the Windows SSPI/Kerberos authentication possible and smooth. Without this library, the seamless single sign-on experience would not have been achievable.
+
 ---
 
 **Made with ❤️ for IT Operations teams everywhere**

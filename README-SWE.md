@@ -412,6 +412,7 @@ Detta projekt är licensierat under MIT-licensen - se [LICENSE](LICENSE)-filen f
 ## Erkännanden
 
 Särskilt tack till:
+- **[alexbrainman](https://github.com/alexbrainman)** för det utmärkta [sspi](https://github.com/alexbrainman/sspi)-paketet, som gör Windows SSPI/Kerberos-autentiseringen möjlig och smidig. Utan detta bibliotek hade den sömlösa single sign-on-upplevelsen inte varit möjlig att uppnå.
 - Alla IT-driftsteam som gav feedback och användningsfall
 - Bidragsgivare som hjälper till att förbättra detta verktyg
 - Teamen som står inför snäva uppgraderingsdeadlines som inspirerade detta projekt
