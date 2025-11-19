@@ -409,25 +409,6 @@ Se [CHANGELOG.md](CHANGELOG.md) för en detaljerad historik över ändringar.
 
 Detta projekt är licensierat under MIT-licensen - se [LICENSE](LICENSE)-filen för detaljer.
 
-## Bidra
-
-Vi välkomnar bidrag från gemenskapen! Oavsett om du fixar buggar, lägger till funktioner eller förbättrar dokumentation, din hjälp gör OSUpgrader bättre för alla.
-
-Vänligen läs [CONTRIBUTING.md](CONTRIBUTING.md) för detaljer om:
-- Hur man rapporterar buggar
-- Hur man föreslår förbättringar
-- Utvecklingsworkflow
-- Kodstilsriktlinjer
-- Pull request-process
-
-## Gemenskap & Support
-
-- **Buggrapporter & Funktionsförfrågningar**: Öppna ett issue på GitHub med våra [issue-mallar](.github/ISSUE_TEMPLATE/)
-- **Frågor**: Använd GitHub Discussions eller öppna ett issue med `question`-etiketten
-- **Säkerhetsproblem**: Vänligen rapportera privat till maintainers - se [SECURITY.md](SECURITY.md)
-- **Bidrag**: Läs våra [Bidragsriktlinjer](CONTRIBUTING.md)
-- **Uppförandekod**: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-
 ## Erkännanden
 
 Särskilt tack till:
@@ -446,7 +427,6 @@ Planerade funktioner och förbättringar:
 - [ ] Uppgraderingshistorik-databas
 - [ ] REST API för automation
 
-Vill du bidra till någon av dessa? Kolla in [CONTRIBUTING.md](CONTRIBUTING.md)!
 
 ---
 
